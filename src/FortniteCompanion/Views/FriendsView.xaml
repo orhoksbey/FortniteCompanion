@@ -1,0 +1,127 @@
+<UserControl x:Class="FortniteCompanion.Views.FriendsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <StackPanel Margin="6,0,6,8">
+        <TextBlock Text="ARKADAŞ SIRALAMASI" Style="{StaticResource TitleText}" />
+        <TextBlock Style="{StaticResource HintText}"
+                   Text="Toplam = geçmişten eklenen değer + başlangıç tarihinden sonraki benzersiz maçlar. Takım arkadaşlarının replay'inden gelen sayılar &quot;Tahmini&quot;dir; aynı maç birden fazla bilgisayardan gelirse oyuncunun kendi replay'i esas alınır, iki kez sayılmaz. Kart rengi sıralamayı gösterir: 1. efsanevi, 2. destansı, 3. nadir, 4. nadir olmayan." />
+      </StackPanel>
+
+      <ItemsControl ItemsSource="{Binding PlayerCards}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="2" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Style="{StaticResource Tile}" Background="{Binding TileBrush}" Padding="20,16">
+              <StackPanel>
+                <!-- Sıra + ad -->
+                <DockPanel>
+                  <TextBlock Text="{Binding RankText}" DockPanel.Dock="Left" FontFamily="{StaticResource DisplayFont}" FontSize="44"
+                             Foreground="White" Effect="{StaticResource HardShadow}" Margin="0,-6,14,0" VerticalAlignment="Top" />
+                  <Border DockPanel.Dock="Right" Style="{StaticResource Ribbon}" Background="{DynamicResource YellowBrush}"
+                          VerticalAlignment="Top" Visibility="{Binding SelfVisibility}">
+                    <TextBlock Text="BU BİLGİSAYAR" Style="{StaticResource RibbonText}" FontSize="12" />
+                  </Border>
+                  <StackPanel>
+                    <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DisplayFont}" FontSize="26" Foreground="White"
+                               Effect="{StaticResource HardShadow}" />
+                    <TextBlock Text="{Binding TierName}" Style="{StaticResource TileLabel}" Foreground="#E6FFFFFF" />
+                  </StackPanel>
+                </DockPanel>
+                <TextBlock Text="{Binding EpicNames, StringFormat='Epic adı: {0}'}" Style="{StaticResource TileHint}" Margin="0,4,0,0" />
+
+                <!-- Toplam sandık -->
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                  <Image Source="{StaticResource ChestIcon}" Width="34" Height="34" Margin="0,0,10,0" />
+                  <TextBlock Text="{Binding TotalChests}" Style="{StaticResource TileValue}" FontSize="46" />
+                  <TextBlock Text="SANDIK" Style="{StaticResource TileLabel}" FontSize="14" VerticalAlignment="Bottom" Margin="8,0,0,10" />
+                </StackPanel>
+                <Border Height="8" CornerRadius="4" Background="#40000000" HorizontalAlignment="Left" Width="260">
+                  <Border CornerRadius="4" Background="White" HorizontalAlignment="Left" Width="{Binding BarWidth}" />
+                </Border>
+
+                <!-- İstatistikler -->
+                <Border Background="#33000000" CornerRadius="6" Padding="12,8" Margin="0,12,0,8">
+                  <UniformGrid Columns="4">
+                    <StackPanel>
+                      <TextBlock Text="MAÇ" Style="{StaticResource TileLabel}" />
+                      <TextBlock Text="{Binding TotalMatches}" FontFamily="{StaticResource DisplayFont}" FontSize="22" Foreground="White" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="SANDIK/MAÇ" Style="{StaticResource TileLabel}" />
+                      <TextBlock Text="{Binding AvgChests}" FontFamily="{StaticResource DisplayFont}" FontSize="22" Foreground="White" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="KILL" Style="{StaticResource TileLabel}" />
+                      <TextBlock Text="{Binding TotalKills}" FontFamily="{StaticResource DisplayFont}" FontSize="22" Foreground="White" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="KILL/MAÇ" Style="{StaticResource TileLabel}" />
+                      <TextBlock Text="{Binding AvgKills}" FontFamily="{StaticResource DisplayFont}" FontSize="22" Foreground="White" />
+                    </StackPanel>
+                  </UniformGrid>
+                </Border>
+                <TextBlock Text="{Binding Best, StringFormat='En iyi maç: {0} sandık'}" Style="{StaticResource TileHint}" />
+                <TextBlock Text="{Binding Week, StringFormat='Bu hafta: {0} sandık'}" Style="{StaticResource TileHint}" />
+                <TextBlock Text="{Binding BaselineText}" Style="{StaticResource TileHint}" Margin="0,6,0,0" />
+                <TextBlock Text="{Binding TrackedText}" Style="{StaticResource TileHint}" />
+                <TextBlock Text="{Binding SourceText}" Style="{StaticResource TileHint}" />
+                <Border Background="#CC1A0F00" CornerRadius="4" Padding="8,4" Margin="0,6,0,0"
+                        Visibility="{Binding HasWarning, Converter={StaticResource BoolToVis}}">
+                  <TextBlock Text="{Binding Warning}" Style="{StaticResource TileHint}" Foreground="#FFFFD27A" />
+                </Border>
+
+                <WrapPanel Margin="0,12,0,0">
+                  <Button Content="Epic adları…" Tag="{Binding PlayerId}" Click="OnEditEpicNames" Background="#59000000" BorderBrush="#80FFFFFF" Foreground="White" />
+                  <Button Content="Geçmiş değerleri düzenle…" Tag="{Binding PlayerId}" Click="OnEditBaseline" Background="#59000000" BorderBrush="#80FFFFFF" Foreground="White" />
+                  <Button Content="Bu bilgisayar bu oyuncunun" Tag="{Binding PlayerId}" Click="OnSetSelf" Background="#59000000" BorderBrush="#80FFFFFF" Foreground="White" />
+                </WrapPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- Eşleşmemiş adlar -->
+      <Border Style="{StaticResource Card}" Visibility="{Binding HasUnmatched, Converter={StaticResource BoolToVis}}">
+        <StackPanel>
+          <TextBlock Text="EŞLEŞMEMİŞ OYUNCU ADLARI" Style="{StaticResource SectionText}" />
+          <TextBlock Style="{StaticResource HintText}" Margin="0,0,0,8"
+                     Text="Replay'lerde görülen ama takipteki dört oyuncudan birine bağlanmamış Epic adları. Bir arkadaşınızsa eşleştirin; geçmiş maçlar otomatik olarak ona yazılır." />
+          <ItemsControl ItemsSource="{Binding Unmatched}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <DockPanel Margin="0,3">
+                  <Button DockPanel.Dock="Right" Content="Eşleştir…" Tag="{Binding Name}" Click="OnMatchName" Margin="8,0,0,0" />
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Width="200" />
+                  <TextBlock Text="{Binding Info}" Style="{StaticResource HintText}" VerticalAlignment="Center" />
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- Paylaşım -->
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <TextBlock Text="ARKADAŞLARLA SENKRONİZASYON" Style="{StaticResource SectionText}" />
+          <TextBlock Style="{StaticResource BodyText}"
+                     Text="Her arkadaş kendi bilgisayarında Fortnite Companion'ı çalıştırırsa, kendi replay'leriyle kendi sandıkları tam olarak sayılır. Verileri birleştirmek için JSON dosyası dışa aktarıp birbirinize gönderin (Discord, USB, e-posta) ve içe aktarın. Aynı maç oturum kimliğiyle tanınır; tekrar içe aktarmak veri çoğaltmaz, var olan veriler üzerine yazılmaz." />
+          <TextBlock Style="{StaticResource HintText}" Margin="0,6,0,8"
+                     Text="Bulut senkronizasyonu bu sürümde yoktur; hiçbir veri internete gönderilmez. Varsayılan olarak, takipte olmayan oyuncuların (rastgele takım arkadaşları) adları dışa aktarılmaz (Ayarlar → Gizlilik)." />
+          <WrapPanel>
+            <Button Content="JSON dışa aktar…" Click="OnExportJson" Style="{StaticResource AccentButton}" />
+            <Button Content="JSON içe aktar…" Click="OnImportJson" />
+            <Button Content="Oyuncu ekle…" Click="OnAddPlayer" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

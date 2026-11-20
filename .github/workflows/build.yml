@@ -1,0 +1,39 @@
+name: Derle, test et ve yayınla
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Sürüm numarası
+        id: ver
+        shell: pwsh
+        run: |
+          $v = '0.0.0'
+          if ('${{ github.event_name }}' -eq 'release') { $v = '${{ github.ref_name }}'.TrimStart('v','V') }
+          else { $v = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version }
+          "version=$v" >> $env:GITHUB_OUTPUT
+      - name: Test
+        run: dotnet test tests/FortniteCompanion.Tests/FortniteCompanion.Tests.csproj -c Release --nologo
+      - name: Publish (tek dosya EXE, otomatik güncelleme kaynağı gömülü)
+        run: dotnet publish src/FortniteCompanion/FortniteCompanion.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=${{ steps.ver.outputs.version }} -p:UpdateRepo=${{ github.repository }} -o dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FortniteCompanion
+          path: dist/FortniteCompanion.exe
+      - name: EXE'yi sürüme ekle (yalnızca yayımlanan sürümler)
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/FortniteCompanion.exe

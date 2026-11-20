@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Sistem tepsisi simgesi (NotifyIcon) ve ekran bilgisi için. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WPF + WinForms örtük using'leri çakışır (Application, MessageBox ...); using'ler açıkça yazılır. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>FortniteCompanion</AssemblyName>
+    <RootNamespace>FortniteCompanion</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Product>Fortnite Companion</Product>
+    <Description>Fortnite için replay tabanlı sandık sayacı ve istatistik paneli</Description>
+    <!-- Parser tipleri yansıma ile bulur: kırpma (trimming) kapalı. -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Düşük bellek: iş istasyonu GC, eşzamanlı GC kapalı. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>true</TieredPGO>
+    <SatelliteResourceLanguages>tr;en</SatelliteResourceLanguages>
+    <!-- Linux/macOS üzerinde de derlenebilsin (yalnızca derleme; çalıştırma Windows gerektirir). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FortniteCompanion.Core\FortniteCompanion.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Otomatik güncelleme kaynağı: dotnet publish ... -p:UpdateRepo=kullanici/depo (GitHub Actions bunu kendisi verir). -->
+  <ItemGroup Condition="'$(UpdateRepo)' != ''">
+    <AssemblyMetadata Include="UpdateRepo" Value="$(UpdateRepo)" />
+  </ItemGroup>
+
+</Project>

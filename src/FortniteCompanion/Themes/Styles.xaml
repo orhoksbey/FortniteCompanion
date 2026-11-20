@@ -1,0 +1,338 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Yazı tipleri: Fortnite'ın yazı tipi (Burbank) lisanslı olduğu için kullanılmaz. Windows'ta hazır gelen
+    Impact (kalın, dar başlıklar/sayılar) ve Bahnschrift (dar gövde metni) ile benzer görünüm elde edilir.
+  -->
+  <FontFamily x:Key="UiFont">Bahnschrift, Segoe UI</FontFamily>
+  <FontFamily x:Key="DisplayFont">Impact, Bahnschrift, Segoe UI Black</FontFamily>
+  <FontFamily x:Key="CondensedFont">Bahnschrift, Segoe UI</FontFamily>
+
+  <!-- Sandık ikonu (vektör, harici dosya yok) -->
+  <DrawingImage x:Key="ChestIcon">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="#FF9A5B2E" Geometry="M2,10 L2,8 C2,4.7 4.7,3 8,3 L16,3 C19.3,3 22,4.7 22,8 L22,10 Z" />
+        <GeometryDrawing Brush="#FF7A4322" Geometry="M3.2,10 L20.8,10 A1.2,1.2 0 0 1 22,11.2 L22,19.8 A1.2,1.2 0 0 1 20.8,21 L3.2,21 A1.2,1.2 0 0 1 2,19.8 L2,11.2 A1.2,1.2 0 0 1 3.2,10 Z" />
+        <GeometryDrawing Brush="#FFFFC83D" Geometry="M2,9.2 L22,9.2 L22,11.2 L2,11.2 Z" />
+        <GeometryDrawing Brush="#FFE8A92A" Geometry="M5,3.4 L6.6,3.4 L6.6,21 L5,21 Z" />
+        <GeometryDrawing Brush="#FFE8A92A" Geometry="M17.4,3.4 L19,3.4 L19,21 L17.4,21 Z" />
+        <GeometryDrawing Brush="#FFFFE07A" Geometry="M10.8,8 L13.2,8 A0.8,0.8 0 0 1 14,8.8 L14,12.6 A0.8,0.8 0 0 1 13.2,13.4 L10.8,13.4 A0.8,0.8 0 0 1 10,12.6 L10,8.8 A0.8,0.8 0 0 1 10.8,8 Z">
+          <GeometryDrawing.Pen>
+            <Pen Brush="#FF7A4322" Thickness="0.6" />
+          </GeometryDrawing.Pen>
+        </GeometryDrawing>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <!-- Metin gölgesi (Fortnite yazılarındaki koyu kontur hissi) -->
+  <DropShadowEffect x:Key="HardShadow" ShadowDepth="2" Direction="300" BlurRadius="0" Opacity="0.55" Color="#FF0A0628" />
+  <DropShadowEffect x:Key="SoftShadow" ShadowDepth="1" BlurRadius="4" Opacity="0.6" Color="Black" />
+
+  <!-- ===== Metin stilleri ===== -->
+  <Style x:Key="TitleText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="38" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="Effect" Value="{StaticResource HardShadow}" />
+    <Setter Property="RenderTransformOrigin" Value="0,0.5" />
+    <Setter Property="RenderTransform">
+      <Setter.Value>
+        <SkewTransform AngleX="-8" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="SectionText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="Margin" Value="0,0,0,10" />
+    <Setter Property="RenderTransformOrigin" Value="0,0.5" />
+    <Setter Property="RenderTransform">
+      <Setter.Value>
+        <SkewTransform AngleX="-8" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="LabelText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style x:Key="ValueText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="36" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="Effect" Value="{StaticResource HardShadow}" />
+  </Style>
+  <Style x:Key="HintText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style x:Key="BodyText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="13.5" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Nadirlik kartları üzerindeki yazılar (her temada beyaz) -->
+  <Style x:Key="TileLabel" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="#E6FFFFFF" />
+    <Setter Property="Effect" Value="{StaticResource SoftShadow}" />
+  </Style>
+  <Style x:Key="TileValue" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="38" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Effect" Value="{StaticResource HardShadow}" />
+  </Style>
+  <Style x:Key="TileHint" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="#CCFFFFFF" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- ===== Kartlar ===== -->
+  <Style x:Key="Card" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="18,16" />
+    <Setter Property="Margin" Value="6" />
+  </Style>
+
+  <!-- Fortnite eşya kartı: renkli degrade + alt kenarda koyu şerit -->
+  <Style x:Key="Tile" TargetType="Border">
+    <Setter Property="BorderBrush" Value="#66FFFFFF" />
+    <Setter Property="BorderThickness" Value="1.5" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="18,14" />
+    <Setter Property="Margin" Value="6" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+  </Style>
+
+  <RadialGradientBrush x:Key="TileLegendary" GradientOrigin="0.5,0.05" Center="0.5,0.05" RadiusX="1.1" RadiusY="1">
+    <GradientStop Color="#FFF7B733" Offset="0" />
+    <GradientStop Color="#FF8A3D0C" Offset="1" />
+  </RadialGradientBrush>
+  <RadialGradientBrush x:Key="TileEpic" GradientOrigin="0.5,0.05" Center="0.5,0.05" RadiusX="1.1" RadiusY="1">
+    <GradientStop Color="#FFC16BFF" Offset="0" />
+    <GradientStop Color="#FF461A7E" Offset="1" />
+  </RadialGradientBrush>
+  <RadialGradientBrush x:Key="TileRare" GradientOrigin="0.5,0.05" Center="0.5,0.05" RadiusX="1.1" RadiusY="1">
+    <GradientStop Color="#FF46B7FF" Offset="0" />
+    <GradientStop Color="#FF103A8C" Offset="1" />
+  </RadialGradientBrush>
+  <RadialGradientBrush x:Key="TileUncommon" GradientOrigin="0.5,0.05" Center="0.5,0.05" RadiusX="1.1" RadiusY="1">
+    <GradientStop Color="#FF6FD84A" Offset="0" />
+    <GradientStop Color="#FF1C5E14" Offset="1" />
+  </RadialGradientBrush>
+  <RadialGradientBrush x:Key="TileCommon" GradientOrigin="0.5,0.05" Center="0.5,0.05" RadiusX="1.1" RadiusY="1">
+    <GradientStop Color="#FFA9B3C2" Offset="0" />
+    <GradientStop Color="#FF3B4352" Offset="1" />
+  </RadialGradientBrush>
+
+  <!-- Eğik sarı şerit başlık (Fortnite "YENİ!" etiketi gibi) -->
+  <Style x:Key="Ribbon" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource YellowBrush}" />
+    <Setter Property="Padding" Value="10,2" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="RenderTransformOrigin" Value="0,0.5" />
+    <Setter Property="RenderTransform">
+      <Setter.Value>
+        <SkewTransform AngleX="-12" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="RibbonText" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Foreground" Value="#FF14123A" />
+  </Style>
+
+  <!-- ===== Düğmeler ===== -->
+  <Style x:Key="BaseButton" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="Background" Value="{DynamicResource InputBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}" />
+    <Setter Property="BorderThickness" Value="1,1,1,3" />
+    <Setter Property="Padding" Value="16,7" />
+    <Setter Property="Margin" Value="0,0,8,8" />
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="13.5" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource YellowBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Bd" Property="RenderTransform">
+                <Setter.Value>
+                  <TranslateTransform Y="1" />
+                </Setter.Value>
+              </Setter>
+              <Setter TargetName="Bd" Property="Opacity" Value="0.85" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style TargetType="Button" BasedOn="{StaticResource BaseButton}" />
+
+  <!-- Fortnite'ın sarı "OYNA" düğmesi -->
+  <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+    <Setter Property="Foreground" Value="#FF14123A" />
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="BorderBrush" Value="#FFC99A00" />
+    <Setter Property="Background">
+      <Setter.Value>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+          <GradientStop Color="#FFFFF27A" Offset="0" />
+          <GradientStop Color="#FFFFD21F" Offset="1" />
+        </LinearGradientBrush>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Üst menü sekmesi (eğik, seçiliyken sarı) -->
+  <Style x:Key="NavButton" TargetType="RadioButton">
+    <!-- Üst menü her iki temada da koyu zemindedir: yazı rengi sabit açık -->
+    <Setter Property="Foreground" Value="#D9E6EEFF" />
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="19" />
+    <Setter Property="Margin" Value="3,0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid>
+            <Border x:Name="Bg" Background="Transparent" CornerRadius="3" RenderTransformOrigin="0.5,0.5">
+              <Border.RenderTransform>
+                <SkewTransform AngleX="-12" />
+              </Border.RenderTransform>
+            </Border>
+            <ContentPresenter Margin="16,7,16,6" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bg" Property="Background" Value="{DynamicResource HoverBackground}" />
+              <Setter Property="Foreground" Value="White" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bg" Property="Background" Value="{DynamicResource YellowBrush}" />
+              <Setter Property="Foreground" Value="#FF14123A" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- ===== Giriş alanları ===== -->
+  <Style TargetType="TextBox">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="Background" Value="{DynamicResource InputBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="Padding" Value="7,6" />
+    <Setter Property="Margin" Value="0,0,8,8" />
+    <Setter Property="FontSize" Value="13.5" />
+  </Style>
+  <Style TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="Margin" Value="0,4,0,7" />
+    <Setter Property="FontSize" Value="13.5" />
+  </Style>
+  <Style TargetType="ComboBox">
+    <Setter Property="Margin" Value="0,0,8,8" />
+    <Setter Property="MinWidth" Value="150" />
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="13.5" />
+    <Setter Property="Padding" Value="7,5" />
+  </Style>
+  <Style TargetType="Slider">
+    <Setter Property="Margin" Value="0,4,8,8" />
+  </Style>
+  <Style TargetType="ToolTip">
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="MaxWidth" Value="380" />
+  </Style>
+
+  <!-- ===== Tablo ===== -->
+  <Style TargetType="DataGrid">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="FontFamily" Value="{StaticResource CondensedFont}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="RowBackground" Value="Transparent" />
+    <Setter Property="AlternatingRowBackground" Value="{DynamicResource CardHighlight}" />
+    <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLine}" />
+    <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+    <Setter Property="HeadersVisibility" Value="Column" />
+    <Setter Property="AutoGenerateColumns" Value="False" />
+    <Setter Property="IsReadOnly" Value="True" />
+    <Setter Property="CanUserAddRows" Value="False" />
+    <Setter Property="CanUserDeleteRows" Value="False" />
+    <Setter Property="SelectionMode" Value="Single" />
+    <Setter Property="RowHeight" Value="32" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+  <Style TargetType="DataGridColumnHeader">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GridLine}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+  <Style TargetType="DataGridCell">
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="DataGridCell">
+          <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+            <ContentPresenter VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="IsSelected" Value="True">
+        <Setter Property="Background" Value="{DynamicResource SelectedBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+</ResourceDictionary>

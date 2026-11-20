@@ -1,0 +1,141 @@
+<UserControl x:Class="FortniteCompanion.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <DockPanel>
+    <DockPanel DockPanel.Dock="Top" Margin="6,0,6,8">
+      <Button DockPanel.Dock="Right" Content="Kaydet ve uygula" Style="{StaticResource AccentButton}" Click="OnSave" VerticalAlignment="Center" />
+      <StackPanel>
+        <TextBlock Text="AYARLAR" Style="{StaticResource TitleText}" />
+        <TextBlock x:Name="SavedText" Text="" Style="{StaticResource HintText}" />
+      </StackPanel>
+    </DockPanel>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <UniformGrid Columns="2">
+          <!-- Overlay -->
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="OVERLAY" Style="{StaticResource SectionText}" />
+              <CheckBox x:Name="OverlayVisible" Content="Overlay'i göster" />
+              <CheckBox x:Name="AutoOverlay" Content="Yalnızca Fortnite açıkken göster (işlem listesine bakılır)" />
+              <CheckBox x:Name="OverlayLocked" Content="Kilitli (fare tıklamaları oyuna geçer)" />
+              <CheckBox x:Name="TeamLine" Content="Takım satırını göster (son maç, takım arkadaşları dahil, kısmi)" />
+              <CheckBox x:Name="Animations" Content="Sayı artışı animasyonu" />
+              <TextBlock Text="Köşe" Style="{StaticResource LabelText}" Margin="0,8,0,3" />
+              <ComboBox x:Name="Corner" HorizontalAlignment="Left" />
+              <TextBlock x:Name="ScaleLabel" Text="Boyut" Style="{StaticResource LabelText}" Margin="0,4,0,0" />
+              <Slider x:Name="Scale" Minimum="0.6" Maximum="2.5" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="OnSliderChanged" />
+              <TextBlock x:Name="OpacityLabel" Text="Opaklık" Style="{StaticResource LabelText}" />
+              <Slider x:Name="OverlayOpacity" Minimum="0.25" Maximum="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="OnSliderChanged" />
+              <Button Content="Konumu sağ üste sıfırla" Click="OnResetPosition" HorizontalAlignment="Left" />
+              <TextBlock Style="{StaticResource HintText}"
+                         Text="Fortnite &quot;Pencereli Tam Ekran&quot; (Windowed Fullscreen) veya &quot;Pencereli&quot; modda olmalıdır. Özel (exclusive) &quot;Tam Ekran&quot; modunda Windows hiçbir pencereyi oyunun üstünde gösteremez; bu bir Windows sınırıdır ve oyuna müdahale etmeden aşılamaz. Kilit açıkken overlay'i sürükleyerek taşıyabilir, Ctrl+fare tekerleğiyle boyutlandırabilirsiniz. Konum ekran oranı olarak saklanır; çözünürlük değişince aynı köşede kalır." />
+            </StackPanel>
+          </Border>
+
+          <!-- Görünüm + kısayollar -->
+          <StackPanel>
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="GÖRÜNÜM" Style="{StaticResource SectionText}" />
+                <TextBlock Text="Tema" Style="{StaticResource LabelText}" Margin="0,0,0,3" />
+                <ComboBox x:Name="Theme" HorizontalAlignment="Left" />
+                <TextBlock Text="Vurgu rengi" Style="{StaticResource LabelText}" Margin="0,0,0,3" />
+                <ComboBox x:Name="Accent" HorizontalAlignment="Left" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="GLOBAL KISAYOLLAR" Style="{StaticResource SectionText}" />
+                <TextBlock Style="{StaticResource HintText}" Margin="0,0,0,6"
+                           Text="Biçim: Ctrl+Alt+O. Tuş adları: A–Z, 0–9, F1–F12, Add (Numpad +), Subtract (Numpad −), NumPad0–NumPad9. Kayıtlı kombinasyon oyuna iletilmez; oyunda kullanmadığınız bir kombinasyon seçin." />
+                <TextBlock Text="Overlay göster/gizle" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="HkToggle" />
+                <TextBlock Text="Overlay kilidi" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="HkLock" />
+                <TextBlock Text="Manuel sayaç +1" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="HkPlus" />
+                <TextBlock Text="Manuel sayaç −1" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="HkMinus" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- Sayım -->
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="SAYIM VE REPLAY KLASÖRÜ" Style="{StaticResource SectionText}" />
+              <TextBlock Text="Bu bilgisayarın oyuncusu (overlay'de gösterilir)" Style="{StaticResource LabelText}" Margin="0,0,0,3" />
+              <ComboBox x:Name="SelfPlayer" HorizontalAlignment="Left" />
+              <TextBlock Text="Replay klasörü" Style="{StaticResource LabelText}" Margin="0,0,0,3" />
+              <TextBox x:Name="ReplayFolder" />
+              <WrapPanel>
+                <Button Content="Gözat…" Click="OnBrowseReplay" />
+                <Button Content="Varsayılan" Click="OnDefaultReplay" />
+                <Button Content="Klasörü aç" Click="OnOpenReplay" />
+                <Button Content="Şimdi tara" Click="OnScanNow" />
+              </WrapPanel>
+              <CheckBox x:Name="ManualLive" Content="Manuel canlı mod (maç içinde kısayolla sayaç)" />
+              <TextBlock Style="{StaticResource HintText}" Margin="22,0,0,6"
+                         Text="Replay ancak maç bitince okunabildiği için maç içindeki sayı gerçek zamanlı değildir. Manuel modda sandık açınca kısayola basarsınız; maç bitip replay gelince manuel sayı toplama EKLENMEZ, replay'deki doğrulanmış sayı kullanılır. Replay gelmezse manuel sayı &quot;Manuel girildi&quot; olarak kaydedilir." />
+              <CheckBox x:Name="IncludeCustom" Content="Özel (custom/private) maçları toplama dahil et" />
+              <TextBlock Text="Sezon başlangıcı (yerel tarih)" Style="{StaticResource LabelText}" Margin="0,6,0,3" />
+              <DatePicker x:Name="SeasonStart" HorizontalAlignment="Left" Width="170" Margin="0,0,0,8" />
+              <CheckBox Content="Deneysel: ekran görüntüsü analiziyle sandık sayma" IsEnabled="False" IsChecked="False" />
+              <TextBlock Style="{StaticResource HintText}" Margin="22,0,0,0"
+                         Text="Bu sürümde yok. Yalnızca ekranda zaten görünen bilgiyi işleyen bir yöntem teorik olarak mümkün, ancak isabet oranı test edilmeden doğru sayı iddia edilemeyeceği için eklenmedi." />
+            </StackPanel>
+          </Border>
+
+          <!-- Uygulama -->
+          <StackPanel>
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="UYGULAMA VE BİLDİRİMLER" Style="{StaticResource SectionText}" />
+                <CheckBox x:Name="StartWithWindows" Content="Windows ile başlat (sistem tepsisinde)" />
+                <CheckBox x:Name="StartMinimized" Content="Küçültülmüş başlat" />
+                <CheckBox x:Name="NotifyMatch" Content="Maç bitince bildirim (&quot;Bu maç 24 sandık açtın&quot;)" />
+                <CheckBox x:Name="NotifyRecord" Content="Kişisel rekor bildirimi" />
+                <TextBlock Style="{StaticResource HintText}"
+                           Text="Uygulama açıkken Fortnite başlarsa overlay otomatik görünür. Maç oynarken uygulamanın açık olması gerekmez: açıldığında bekleyen replay'leri okur. Ancak Fortnite eski replay'leri siler; Windows ile başlatma önerilir." />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="YEDEKLEME VE VERİ" Style="{StaticResource SectionText}" />
+                <CheckBox x:Name="AutoBackup" Content="Günlük otomatik yedek" />
+                <TextBlock Text="Saklanacak yedek sayısı" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="BackupKeep" Width="80" HorizontalAlignment="Left" />
+                <TextBlock Text="Yedek klasörü (boş = varsayılan)" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="BackupFolder" />
+                <WrapPanel>
+                  <Button Content="Şimdi yedekle" Click="OnBackupNow" />
+                  <Button Content="Yedek klasörünü aç" Click="OnOpenBackups" />
+                  <Button Content="Veri klasörünü aç" Click="OnOpenData" />
+                  <Button Content="Hata günlüğü" Click="OnOpenLogs" />
+                  <Button Content="Değişiklik geçmişi…" Click="OnEditLog" />
+                </WrapPanel>
+                <TextBlock Style="{StaticResource HintText}"
+                           Text="Maç kayıtları ve değişiklik geçmişi veri tabanında silinemez (kalıcı geçmiş). Yanlış bir kayıt silinmez, &quot;hariç tutulur&quot;. JSON/CSV dışa aktarma Arkadaşlar ve Maç Geçmişi sekmelerindedir." />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="GİZLİLİK VE GÜNCELLEME" Style="{StaticResource SectionText}" />
+                <CheckBox x:Name="HideUnknown" Content="Dışa aktarmada takipte olmayan oyuncu adlarını gizle" />
+                <CheckBox x:Name="AutoUpdateBox" Content="Otomatik güncelle (GitHub sürümlerinden, oyun kapalıyken kurulur)" />
+                <TextBlock Text="GitHub deposu (kullanıcı/depo — boşsa EXE'ye gömülü depo)" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="UpdateRepoBox" />
+                <TextBlock x:Name="UpdateInfo" Text="" Style="{StaticResource HintText}" Margin="0,0,0,6" />
+                <Button Content="Şimdi denetle" Click="OnCheckUpdates" HorizontalAlignment="Left" />
+                <TextBlock Style="{StaticResource HintText}"
+                           Text="Uygulama Epic şifresi, oturum çerezi veya erişim anahtarı istemez ve kullanmaz. Otomatik güncelleme yalnızca GitHub'daki sürüm bilgisini okur ve EXE'yi indirir; hiçbir kullanıcı verisi gönderilmez. Kapalıyken hiçbir ağ bağlantısı yapılmaz." />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </UniformGrid>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

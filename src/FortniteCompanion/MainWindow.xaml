@@ -1,0 +1,79 @@
+<Window x:Class="FortniteCompanion.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:FortniteCompanion.Views"
+        Title="Fortnite Companion"
+        Width="1320" Height="840" MinWidth="1040" MinHeight="660"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackground}"
+        FontFamily="{StaticResource UiFont}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Fortnite lobisi gibi üst menü -->
+    <Border Background="{DynamicResource HeaderBackground}" BorderBrush="#33FFFFFF" BorderThickness="0,0,0,1">
+      <Grid Margin="18,10,18,10">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Logo -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,26,0">
+          <Image Source="{StaticResource ChestIcon}" Width="40" Height="40" />
+          <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" RenderTransformOrigin="0,0.5">
+            <StackPanel.RenderTransform>
+              <SkewTransform AngleX="-8" />
+            </StackPanel.RenderTransform>
+            <TextBlock Text="FORTNITE" FontFamily="{StaticResource DisplayFont}" FontSize="13" Foreground="{DynamicResource YellowBrush}" />
+            <TextBlock Text="COMPANION" FontFamily="{StaticResource DisplayFont}" FontSize="24" Foreground="White"
+                       Margin="0,-4,0,0" Effect="{StaticResource HardShadow}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Sekmeler -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <RadioButton x:Name="NavOverview" Content="GENEL BAKIŞ" Style="{StaticResource NavButton}" GroupName="nav" IsChecked="True" Checked="OnNav" />
+          <RadioButton x:Name="NavMatches" Content="MAÇ GEÇMİŞİ" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
+          <RadioButton x:Name="NavFriends" Content="ARKADAŞLAR" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
+          <RadioButton x:Name="NavCharts" Content="GRAFİKLER" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
+          <RadioButton x:Name="NavSettings" Content="AYARLAR" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
+        </StackPanel>
+
+        <!-- Oyuncu + toplam sandık "cüzdanı" (V-Papel göstergesi gibi) -->
+        <Border Grid.Column="2" CornerRadius="20" Padding="6,4,16,4" VerticalAlignment="Center"
+                Background="#66000000" BorderBrush="#40FFFFFF" BorderThickness="1"
+                ToolTip="{Binding TotalChestsSource}">
+          <StackPanel Orientation="Horizontal">
+            <Border Width="32" Height="32" CornerRadius="16" Background="#33FFE14D">
+              <Image Source="{StaticResource ChestIcon}" Width="22" Height="22" />
+            </Border>
+            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding TotalChests}" FontFamily="{StaticResource DisplayFont}" FontSize="20"
+                         Foreground="{DynamicResource YellowBrush}" />
+              <TextBlock Text="{Binding SelfName}" FontFamily="{StaticResource CondensedFont}" FontSize="11"
+                         FontWeight="Bold" Foreground="#CCFFFFFF" Margin="0,-3,0,0" />
+            </StackPanel>
+            <Ellipse Width="9" Height="9" Fill="#FFFF4D4D" Margin="12,0,0,0" VerticalAlignment="Center" ToolTip="Maç devam ediyor"
+                     Visibility="{Binding InMatch, Converter={StaticResource BoolToVis}}" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <!-- İçerik -->
+    <Grid Grid.Row="1" Margin="22,16,22,12">
+      <views:OverviewView x:Name="OverviewPage" />
+      <views:MatchesView x:Name="MatchesPage" Visibility="Collapsed" />
+      <views:FriendsView x:Name="FriendsPage" Visibility="Collapsed" />
+      <views:ChartsView x:Name="ChartsPage" Visibility="Collapsed" />
+      <views:SettingsView x:Name="SettingsPage" Visibility="Collapsed" />
+    </Grid>
+  </Grid>
+</Window>

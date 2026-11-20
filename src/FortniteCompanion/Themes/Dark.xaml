@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Koyu tema: Fortnite lobisi gibi üstten aydınlanan derin mavi → mor -->
+  <RadialGradientBrush x:Key="WindowBackground" GradientOrigin="0.5,-0.1" Center="0.5,-0.1" RadiusX="1.25" RadiusY="1.15">
+    <GradientStop Color="#FF2F6BE8" Offset="0" />
+    <GradientStop Color="#FF1C3497" Offset="0.38" />
+    <GradientStop Color="#FF151A5C" Offset="0.72" />
+    <GradientStop Color="#FF0C0B2E" Offset="1" />
+  </RadialGradientBrush>
+
+  <LinearGradientBrush x:Key="HeaderBackground" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#F00A0F33" Offset="0" />
+    <GradientStop Color="#D90A0F33" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="SidebarBackground" Color="#CC0A0F33" />
+
+  <!-- Cam kart: koyu lacivert, hafif saydam -->
+  <LinearGradientBrush x:Key="CardBackground" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#B3172566" Offset="0" />
+    <GradientStop Color="#B30E1544" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="CardBorder" Color="#38FFFFFF" />
+  <SolidColorBrush x:Key="CardHighlight" Color="#1FFFFFFF" />
+
+  <SolidColorBrush x:Key="InputBackground" Color="#33081040" />
+  <SolidColorBrush x:Key="InputBorder" Color="#59FFFFFF" />
+  <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="TextSecondary" Color="#D9C9D8FF" />
+  <SolidColorBrush x:Key="TextMuted" Color="#A69AAEE0" />
+  <SolidColorBrush x:Key="TextOnTile" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="TextOnAccent" Color="#FF14123A" />
+  <SolidColorBrush x:Key="HoverBackground" Color="#26FFFFFF" />
+  <SolidColorBrush x:Key="SelectedBackground" Color="#40FFFFFF" />
+  <SolidColorBrush x:Key="GridLine" Color="#24FFFFFF" />
+  <SolidColorBrush x:Key="WarningBrush" Color="#FFFFC247" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#FFFF5C6C" />
+
+  <!-- Fortnite vurgu renkleri ve nadirlik renkleri -->
+  <SolidColorBrush x:Key="YellowBrush" Color="#FFFFE14D" />
+  <SolidColorBrush x:Key="GreenBrush" Color="#FF5CE05A" />
+  <SolidColorBrush x:Key="BlueBrush" Color="#FF4FC3FF" />
+  <SolidColorBrush x:Key="GoldBrush" Color="#FFFFC83D" />
+  <SolidColorBrush x:Key="PurpleBrush" Color="#FFC17BFF" />
+
+  <!-- Overlay (oyun içi HUD) -->
+  <LinearGradientBrush x:Key="OverlayBackground" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#E0101A4D" Offset="0" />
+    <GradientStop Color="#E00A0F33" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="OverlayBorder" Color="#4DFFFFFF" />
+  <SolidColorBrush x:Key="OverlayText" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="OverlayLabel" Color="#D9BFD0FF" />
+</ResourceDictionary>
