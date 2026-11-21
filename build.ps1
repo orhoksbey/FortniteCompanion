@@ -16,7 +16,10 @@ param(
   [switch]$SkipTests,
   [switch]$FrameworkDependent,
   # Otomatik güncelleme için GitHub deposu, ör. -UpdateRepo "kullanici/FortniteCompanion"
-  [string]$UpdateRepo = ""
+  [string]$UpdateRepo = "",
+  # Ekip sunucusu (server/KURULUM.md): -SyncUrl https://script.google.com/macros/s/.../exec -SyncKey fc-...
+  [string]$SyncUrl = "",
+  [string]$SyncKey = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,6 +59,8 @@ $common = @(
   '-o', $out
 )
 if ($UpdateRepo) { $common += "-p:UpdateRepo=$UpdateRepo" }
+if ($SyncUrl) { $common += "-p:SyncUrl=$SyncUrl" }
+if ($SyncKey) { $common += "-p:SyncKey=$SyncKey" }
 if ($FrameworkDependent) {
   dotnet publish @common --self-contained false
 } else {

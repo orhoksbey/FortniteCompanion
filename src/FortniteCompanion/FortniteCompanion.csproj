@@ -38,4 +38,12 @@
     <AssemblyMetadata Include="UpdateRepo" Value="$(UpdateRepo)" />
   </ItemGroup>
 
+  <!-- Ekip sunucusu (Google Apps Script): -p:SyncUrl=https://script.google.com/... -p:SyncKey=fc-... -->
+  <ItemGroup Condition="'$(SyncUrl)' != ''">
+    <AssemblyMetadata Include="SyncUrl" Value="$(SyncUrl)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SyncKey)' != ''">
+    <AssemblyMetadata Include="SyncKey" Value="$(SyncKey)" />
+  </ItemGroup>
+
 </Project>

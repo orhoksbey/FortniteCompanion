@@ -26,6 +26,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly CompanionService _service;
     private CompanionSnapshot _snapshot = new();
     private List<MatchItem> _allMatches = new();
+    private bool _firstApply = true;
 
     public MainViewModel(CompanionService service)
     {
@@ -206,46 +207,66 @@ public sealed class MainViewModel : ObservableObject
     private void BuildTeam()
     {
         var s = _snapshot;
-        var visible = s.Players
-            .Where(p => ShowHidden || !p.Player.Hidden || p.Player.Id == _service.Settings.SelfPlayerId)
-            .OrderByDescending(x => x.TotalChests).ThenBy(x => x.Player.SortOrder)
-            .ToList();
-        var maxChests = Math.Max(1, visible.Count == 0 ? 1 : visible.Max(p => p.TotalChests));
+        var selfId = _service.Settings.SelfPlayerId;
+        var entries = TeamBoard.Build(s.Players, s.Remote, selfId, ShowHidden);
+        var maxChests = Math.Max(1, entries.Count == 0 ? 1 : entries.Max(e => e.TotalChests));
 
         PlayerCards.Clear();
         Podium.Clear();
         Others.Clear();
         var rank = 0;
-        foreach (var p in visible)
+        foreach (var e in entries)
         {
             rank++;
+            var p = e.Local;
             var warn = new List<string>();
-            if (!p.Player.EpicNameList.Any())
+            if (!e.FromServer && string.IsNullOrWhiteSpace(e.EpicNames))
             {
                 warn.Add("Epic adı girilmedi: replay'lerdeki sayılar bu oyuncuya bağlanamaz.");
             }
-            if (p.OverlapCount > 0)
+
+            string baselineText, trackedText, sourceText;
+            if (e.FromServer)
             {
-                warn.Add($"{p.OverlapCount} örtüşen maç toplama eklenmedi.");
+                baselineText = $"☁ Ekip sunucusundan · {TeamSync.Ago(e.ServerUpdatedUtc)} güncellendi";
+                trackedText = $"Bu hafta {Fmt.N(e.Week)} · bugün {Fmt.N(e.Today)} sandık";
+                sourceText = string.IsNullOrEmpty(e.AppVersion) ? "Kendi bilgisayarındaki replay'lerle sayıldı" : $"Kendi bilgisayarında sayıldı · v{e.AppVersion}";
             }
+            else if (p != null)
+            {
+                baselineText = $"Geçmiş: {Fmt.N(p.BaselineMatches)} maç · {Fmt.N(p.BaselineChests)} sandık · {Fmt.N(p.BaselineKills)} kill";
+                trackedText = $"Yeni: {Fmt.N(p.TrackedMatches)} maç · {Fmt.N(p.TrackedChests)} sandık · {Fmt.N(p.TrackedKills)} kill";
+                sourceText = $"Replay: {Fmt.N(p.ReplayVerifiedChests)} · Tahmini: {Fmt.N(p.PartialChests)} · Manuel: {Fmt.N(p.ManualChests)}";
+                if (p.OverlapCount > 0)
+                {
+                    // Hata değil: bu maçlar geçmiş toplamın tarihinden önce oynandı, yani o sayıya zaten dahil.
+                    sourceText += $"\n✓ {p.OverlapCount} replay maçı geçmiş toplamın içinde (çift sayılmadı)";
+                }
+            }
+            else
+            {
+                baselineText = trackedText = sourceText = "";
+            }
+
             var item = new PlayerCardItem
             {
-                PlayerId = p.Player.Id,
-                Name = p.Player.DisplayName,
-                EpicNames = p.Player.EpicNames,
-                IsSelf = p.Player.Id == _service.Settings.SelfPlayerId,
-                Hidden = p.Player.Hidden,
-                TotalChestsValue = p.TotalChests,
-                TotalMatches = Fmt.N(p.TotalMatches),
-                AvgChests = Fmt.D1(p.ChestsPerMatch),
-                TotalKills = Fmt.N(p.TotalKills),
-                AvgKills = Fmt.D1(p.KillsPerMatch),
-                Best = p.BestMatch is { } pb ? Fmt.N(pb.Chests) : "—",
-                Week = Fmt.N(p.ThisWeek),
-                BaselineText = $"Geçmiş: {Fmt.N(p.BaselineMatches)} maç · {Fmt.N(p.BaselineChests)} sandık · {Fmt.N(p.BaselineKills)} kill",
-                TrackedText = $"Yeni: {Fmt.N(p.TrackedMatches)} maç · {Fmt.N(p.TrackedChests)} sandık · {Fmt.N(p.TrackedKills)} kill",
-                SourceText = $"Replay: {Fmt.N(p.ReplayVerifiedChests)} · Tahmini: {Fmt.N(p.PartialChests)} · Manuel: {Fmt.N(p.ManualChests)}",
-                BarRatio = (double)p.TotalChests / maxChests,
+                PlayerId = e.LocalPlayerId ?? 0,
+                Name = e.Name,
+                EpicNames = e.EpicNames,
+                IsSelf = e.IsSelf,
+                Hidden = e.Hidden,
+                FromServer = e.FromServer,
+                TotalChestsValue = e.TotalChests,
+                TotalMatches = Fmt.N(e.TotalMatches),
+                AvgChests = Fmt.D1(e.ChestsPerMatch),
+                TotalKills = Fmt.N(e.TotalKills),
+                AvgKills = Fmt.D1(e.KillsPerMatch),
+                Best = e.BestMatch is int b ? Fmt.N(b) : "—",
+                Week = Fmt.N(e.Week),
+                BaselineText = baselineText,
+                TrackedText = trackedText,
+                SourceText = sourceText,
+                BarRatio = (double)e.TotalChests / maxChests,
                 Warning = string.Join(" ", warn),
                 Rank = rank,
             };
@@ -260,14 +281,27 @@ public sealed class MainViewModel : ObservableObject
             }
         }
 
-        var hiddenCount = s.Players.Count(p => p.Player.Hidden && p.Player.Id != _service.Settings.SelfPlayerId);
+        var hiddenCount = s.Players.Count(p => p.Player.Hidden && p.Player.Id != selfId);
         HiddenInfo = hiddenCount == 0 ? "" : $"{hiddenCount} gizli oyuncu";
         HasOthers = Others.Count > 0;
-        TeamEmpty = visible.Count <= 1;
-        var teamChests = visible.Sum(p => p.TotalChests);
-        var teamMatches = visible.Sum(p => p.TotalMatches);
-        TeamSummary = $"{visible.Count} oyuncu · ekip toplamı {Fmt.N(teamChests)} sandık · {Fmt.N(teamMatches)} maç";
+        TeamEmpty = entries.Count <= 1;
+        var st = s.SyncStatus;
+        var syncText = st == null || !st.Configured ? "Ekip sunucusu: bağlı değil (dosya ile paylaşım)"
+            : !st.Enabled ? "Ekip sunucusu: kapalı (Ayarlar)"
+            : st.LastError != null ? "Ekip sunucusu: " + st.LastError
+            : st.LastSuccessUtc != null ? $"☁ Ekip sunucusu: {TeamSync.Ago(st.LastSuccessUtc)} eşitlendi"
+            : "☁ Ekip sunucusuna bağlanılıyor…";
+        TeamSummary = $"{entries.Count} oyuncu · ekip toplamı {Fmt.N(entries.Sum(e => e.TotalChests))} sandık · {Fmt.N(entries.Sum(e => e.TotalMatches))} maç   |   {syncText}";
+        _teamEntries = entries;
+        var myRank = entries.FindIndex(e => e.IsSelf);
+        SelfRankText = myRank >= 0 && entries.Count > 1 ? $"EKİPTE #{myRank + 1} / {entries.Count}" : "";
     }
+
+    private List<TeamEntry> _teamEntries = new();
+
+    private string _selfRankText = "";
+    public string SelfRankText { get => _selfRankText; private set => Set(ref _selfRankText, value); }
+
     public ObservableCollection<UnmatchedItem> Unmatched { get; } = new();
 
     private bool _hasUnmatched;
@@ -310,6 +344,16 @@ public sealed class MainViewModel : ObservableObject
 
     public void Apply(CompanionSnapshot s)
     {
+        // İzleyici durumu her birkaç saniyede bir yayınlanır; listeler ve grafikler yalnızca veri değişince
+        // yeniden oluşturulur (gereksiz yeniden çizim ve titreme olmasın).
+        var prev = _snapshot;
+        var dataChanged = _firstApply
+                          || !ReferenceEquals(prev.Players, s.Players)
+                          || !ReferenceEquals(prev.Remote, s.Remote)
+                          || prev.SyncStatus?.LastSuccessUtc != s.SyncStatus?.LastSuccessUtc
+                          || prev.SyncStatus?.LastError != s.SyncStatus?.LastError
+                          || prev.SyncStatus?.Enabled != s.SyncStatus?.Enabled;
+        _firstApply = false;
         _snapshot = s;
         var self = s.Self;
 
@@ -359,7 +403,7 @@ public sealed class MainViewModel : ObservableObject
 
         if (self != null && self.OverlapCount > 0)
         {
-            warnings.Add($"{self.OverlapCount} maç geçmiş başlangıç tarihinden önce oynanmış; geçmiş değerlerle örtüşebileceği için toplama eklenmedi (Maç Geçmişi'nden inceleyin).");
+            warnings.Add($"Bilgi: {self.OverlapCount} replay maçı geçmiş toplamını girdiğin andan önce oynanmış, yani o sayının içinde. Çift sayılmasın diye ayrıca eklenmedi (Maç Geçmişi → Dahil et ile değiştirilebilir).");
         }
         if (self != null && self.SuspiciousCount > 0)
         {
@@ -374,6 +418,11 @@ public sealed class MainViewModel : ObservableObject
             warnings.Add("Henüz kim olduğunu seçmedin: Ayarlar → \"Sen kimsin?\" kurulumunu aç.");
         }
         WarningText = string.Join(Environment.NewLine, warnings.Select(x => "• " + x));
+
+        if (!dataChanged)
+        {
+            return;
+        }
 
         RecentMatches.Clear();
         if (self != null)
@@ -510,11 +559,12 @@ public sealed class MainViewModel : ObservableObject
             .ToList();
 
         // Dört oyuncu karşılaştırması
+        // Karşılaştırma: ekip sunucusundakiler dahil birleşik sıralama
+        var board = _teamEntries.Where(e => !e.Hidden || e.IsSelf).ToList();
+        ComparePoints = board.Select(x => new ChartPoint(x.Name, x.TotalChests)).ToList();
+        CompareAvgPoints = board.Select(x => new ChartPoint(x.Name, Math.Round(x.ChestsPerMatch, 1))).ToList();
+        CompareKillPoints = board.Select(x => new ChartPoint(x.Name, x.TotalKills)).ToList();
         var team = VisiblePlayers(s).OrderByDescending(x => x.TotalChests).ToList();
-        ComparePoints = team.Select(x => new ChartPoint(x.Player.DisplayName, x.TotalChests,
-            $"{x.Player.DisplayName}: {x.TotalChests} sandık (geçmiş {x.BaselineChests} + yeni {x.TrackedChests})")).ToList();
-        CompareAvgPoints = team.Select(x => new ChartPoint(x.Player.DisplayName, Math.Round(x.ChestsPerMatch, 1))).ToList();
-        CompareKillPoints = team.Select(x => new ChartPoint(x.Player.DisplayName, x.TotalKills)).ToList();
 
         // Zaman içindeki gelişim: geçmiş değerden başlayan kümülatif toplam (son 30 gün)
         var colors = new[] { "#FFFFC83D", "#FF3FA9FF", "#FF3DDC84", "#FFB57CFF", "#FFFF7A59", "#FF4DE1D2" };

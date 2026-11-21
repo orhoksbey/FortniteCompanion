@@ -35,6 +35,8 @@
               </Border>
               <TextBlock Text="{Binding TotalChests}" Style="{StaticResource TileValue}" FontSize="86" Margin="0,2,0,-6" />
               <TextBlock Text="{Binding SelfName}" Style="{StaticResource TileLabel}" FontSize="15" />
+              <TextBlock Text="{Binding SelfRankText}" FontFamily="{StaticResource DisplayFont}" FontSize="20" Foreground="White"
+                         Effect="{StaticResource HardShadow}" Margin="0,2,0,0" />
               <TextBlock Text="Kaynak dağılımı için üzerine gelin" Style="{StaticResource TileHint}" Margin="0,6,0,0" />
             </StackPanel>
           </Grid>

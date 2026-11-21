@@ -74,6 +74,10 @@ public partial class SettingsView : UserControl
         BackupKeep.Text = s.BackupKeepCount.ToString(CultureInfo.InvariantCulture);
         BackupFolder.Text = s.BackupFolder ?? "";
         HideUnknown.IsChecked = s.ExportHideUnknownNames;
+        TeamSyncBox.IsChecked = s.TeamSyncEnabled;
+        SyncUrlBox.Text = s.TeamSyncUrl ?? "";
+        SyncKeyBox.Text = s.TeamSyncKey ?? "";
+        UpdateSyncInfo();
         AutoUpdateBox.IsChecked = s.AutoUpdate;
         AutoInstallBox.IsChecked = s.AutoInstallUpdates;
         UpdateRepoBox.Text = s.UpdateRepo ?? "";
@@ -158,6 +162,9 @@ public partial class SettingsView : UserControl
         }
         s.BackupFolder = string.IsNullOrWhiteSpace(BackupFolder.Text) ? null : BackupFolder.Text.Trim();
         s.ExportHideUnknownNames = HideUnknown.IsChecked == true;
+        s.TeamSyncEnabled = TeamSyncBox.IsChecked == true;
+        s.TeamSyncUrl = string.IsNullOrWhiteSpace(SyncUrlBox.Text) ? null : SyncUrlBox.Text.Trim();
+        s.TeamSyncKey = string.IsNullOrWhiteSpace(SyncKeyBox.Text) ? null : SyncKeyBox.Text.Trim();
         s.AutoUpdate = AutoUpdateBox.IsChecked == true;
         s.AutoInstallUpdates = AutoInstallBox.IsChecked == true;
         s.UpdateRepo = string.IsNullOrWhiteSpace(UpdateRepoBox.Text) ? null : UpdateRepoBox.Text.Trim().Trim('/');
@@ -176,6 +183,24 @@ public partial class SettingsView : UserControl
         s.OverlayScreen = null;
         Corner.SelectedIndex = 0;
         App.Current.ApplySettings(hotkeysChanged: false, folderChanged: false);
+    }
+
+    private void UpdateSyncInfo()
+    {
+        var st = Service.Sync.Status;
+        SyncInfo.Text = !st.Configured ? "Sunucu ayarlı değil: arkadaşlarla dosya (JSON) ile paylaşım kullanılıyor."
+            : !st.Enabled ? "Kapalı: veri gönderilmiyor."
+            : st.LastError != null ? "Son deneme başarısız: " + st.LastError
+            : st.LastSuccessUtc != null ? $"Bağlı · {TeamSync.Ago(st.LastSuccessUtc)} eşitlendi · ekipte {st.RemoteCount} kişi daha"
+            : "Bağlanılıyor…";
+    }
+
+    private async void OnSyncNow(object sender, RoutedEventArgs e)
+    {
+        OnSave(sender, e);
+        SyncInfo.Text = "Eşitleniyor…";
+        await Service.SyncTeamAsync(force: true);
+        UpdateSyncInfo();
     }
 
     private void OnOnboarding(object sender, RoutedEventArgs e)

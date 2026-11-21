@@ -38,7 +38,11 @@ değer **"Önceki istatistikten aktarıldı"** olarak saklanır.
 
 **Toplam = başlangıç değeri + başlangıç tarihinden sonraki yeni ve benzersiz maçlar.**
 
-Ekip arkadaşları **EKİP → Ekip dosyasını dışa aktar** ile bir JSON dosyası paylaşır, diğerleri içe aktarır. Ekip
+**Ekip sunucusu (önerilen):** Google Sheets + Apps Script ile ücretsiz bir ekip sunucusu kurulursa herkesin uygulaması
+kendi toplamlarını oraya gönderir ve ekip sıralamasını oradan alır; yönetici de herkesi bir web panelinden görür.
+Kurulum: [server/KURULUM.md](server/KURULUM.md). Oyuncular Ayarlar'dan katılımı kapatabilir.
+
+Sunucu yoksa ekip arkadaşları **EKİP → Ekip dosyasını dışa aktar** ile bir JSON dosyası paylaşır, diğerleri içe aktarır. Ekip
 istenen kadar kişi olabilir; ilk üç kürsüde, diğerleri sıralama listesinde gösterilir. Ayrılan biri silinmez, gizlenir.
 
 ## Güvenlik
@@ -56,7 +60,8 @@ src/FortniteCompanion        WPF uygulaması: overlay, kontrol paneli, tepsi, k�
 tests/                       xUnit testleri (istatistik, tekilleştirme, örtüşme, içe aktarma, yedek)
 tools/ReplayScan             gerçek replay'lerle okuyucuyu doğrulamak için komut satırı aracı
 lib/                         FortniteReplayDecompressor (MIT), LED-N yamalarıyla
-docs/                        kurulum, güvenlik, mimari, test durumu
+docs/                        kurulum, güvenlik, mimari, test durumu, güncelleme
+server/                      ekip sunucusu (Google Apps Script) ve yönetici paneli
 ```
 
 Lisanslar ve kaynaklar: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)

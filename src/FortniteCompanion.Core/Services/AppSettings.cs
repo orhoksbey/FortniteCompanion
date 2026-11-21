@@ -87,6 +87,24 @@ public sealed class AppSettings
     /// <summary>GitHub deposu ("kullanıcı/depo"). Boşsa EXE'nin içine derlemede gömülen depo kullanılır.</summary>
     public string? UpdateRepo { get; set; }
 
+    /// <summary>
+    /// Ekip sıralamasına katıl: kendi toplamlarını ve maç listeni ekip sunucusuna (Google Sheets) gönder,
+    /// ekip sıralamasını oradan al. Varsayılan açık; ilk açılışta ne gönderildiği gösterilir.
+    /// </summary>
+    public bool TeamSyncEnabled { get; set; } = true;
+
+    /// <summary>Ekip sunucusu adresi (boşsa EXE'ye gömülü adres).</summary>
+    public string? TeamSyncUrl { get; set; }
+
+    /// <summary>Ekip anahtarı (boşsa EXE'ye gömülü anahtar).</summary>
+    public string? TeamSyncKey { get; set; }
+
+    /// <summary>Bu kurulumun rastgele kimliği (sunucuda satır anahtarı).</summary>
+    public string? DeviceId { get; set; }
+
+    /// <summary>Bu kurulumun gizli anahtarı: satırını yalnızca bu cihaz güncelleyebilir.</summary>
+    public string? DeviceSecret { get; set; }
+
     /// <summary>Deneysel ekran analizi: bu sürümde uygulanmadı, her zaman kapalı.</summary>
     [JsonIgnore]
     public bool ExperimentalScreenAnalysis => false;

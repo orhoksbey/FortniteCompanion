@@ -137,6 +137,20 @@
                            Text="Uygulama Epic şifresi, oturum çerezi veya erişim anahtarı istemez ve kullanmaz. Otomatik güncelleme yalnızca GitHub'daki sürüm bilgisini okur ve EXE'yi indirir; hiçbir kullanıcı verisi gönderilmez. Kapalıyken hiçbir ağ bağlantısı yapılmaz." />
               </StackPanel>
             </Border>
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="EKİP SUNUCUSU" Style="{StaticResource SectionText}" />
+                <CheckBox x:Name="TeamSyncBox" Content="Ekip sıralamasına katıl (kendi toplamlarımı ekip sunucusuna gönder)" />
+                <TextBlock Style="{StaticResource HintText}" Margin="0,0,0,8"
+                           Text="Gönderilenler: görünen ad, Epic adı, sandık/maç/kill toplamları, bugün/hafta/sezon sandığı, en iyi maç, uygulama sürümü ve kendi maçlarının listesi (tarih, sandık, kill, mod, sıra). Rakip adları, bilgisayar veya Epic hesap bilgisi gönderilmez. Kapatınca bir daha gönderilmez." />
+                <TextBlock Text="Sunucu adresi (boşsa EXE'ye gömülü adres)" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="SyncUrlBox" />
+                <TextBlock Text="Ekip anahtarı (boşsa EXE'ye gömülü anahtar)" Style="{StaticResource LabelText}" />
+                <TextBox x:Name="SyncKeyBox" />
+                <TextBlock x:Name="SyncInfo" Text="" Style="{StaticResource HintText}" Margin="0,0,0,6" />
+                <Button Content="Şimdi eşitle" Click="OnSyncNow" HorizontalAlignment="Left" />
+              </StackPanel>
+            </Border>
           </StackPanel>
         </UniformGrid>
       </StackPanel>

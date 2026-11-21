@@ -176,6 +176,11 @@ public sealed class PlayerCardItem
     public string EpicNames { get; init; } = "";
     public bool IsSelf { get; init; }
     public bool Hidden { get; init; }
+    public bool FromServer { get; init; }
+    public bool IsLocal => PlayerId != 0;
+    public Visibility LocalVisibility => IsLocal ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ServerVisibility => FromServer ? Visibility.Visible : Visibility.Collapsed;
+    public string ServerTag => FromServer ? "  ☁ sunucu" : "";
     public string HideButtonText => Hidden ? "Göster" : "Gizle";
     public double RowOpacity => Hidden ? 0.55 : 1.0;
     public string SelfBadge => IsSelf ? "BU BİLGİSAYAR" : "";

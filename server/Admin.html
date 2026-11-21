@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root { --y:#ffe14d; --bg1:#2f6be8; --bg2:#151a5c; --card:rgba(23,37,102,.72); --line:rgba(255,255,255,.14); --muted:#a9b8e6; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Bahnschrift, "Segoe UI", system-ui, sans-serif; color:#fff;
+           background: radial-gradient(ellipse at 50% -10%, var(--bg1) 0%, #1c3497 38%, var(--bg2) 72%, #0c0b2e 100%) fixed; min-height:100vh; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 18px 40px; }
+    h1 { font-family: Impact, "Arial Black", sans-serif; font-weight: 400; font-size: 40px; margin: 0; transform: skewX(-8deg);
+         text-shadow: 2px 2px 0 #0a0628; letter-spacing: .5px; }
+    .sub { color: var(--muted); margin: 4px 0 18px; font-size: 14px; }
+    .tiles { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; margin-bottom: 16px; }
+    .tile { border-radius: 10px; padding: 14px 16px; border: 1.5px solid rgba(255,255,255,.4); }
+    .tile .l { font-size: 12px; font-weight: 700; opacity: .9; }
+    .tile .v { font-family: Impact, "Arial Black", sans-serif; font-size: 36px; text-shadow: 2px 2px 0 rgba(10,6,40,.55); }
+    .leg { background: radial-gradient(ellipse at 50% 5%, #f7b733, #8a3d0c); }
+    .epi { background: radial-gradient(ellipse at 50% 5%, #c16bff, #461a7e); }
+    .rar { background: radial-gradient(ellipse at 50% 5%, #46b7ff, #103a8c); }
+    .unc { background: radial-gradient(ellipse at 50% 5%, #6fd84a, #1c5e14); }
+    .bar { display:flex; gap:10px; align-items:center; margin: 6px 0 12px; flex-wrap: wrap; }
+    input { background: rgba(8,16,64,.5); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius: 6px; padding: 9px 12px; font: inherit; min-width: 240px; }
+    a.btn, button { background: linear-gradient(#fff27a,#ffd21f); color:#14123a; border:0; border-bottom: 3px solid #c99a00; border-radius: 6px;
+           padding: 8px 16px; font-family: Impact, "Arial Black", sans-serif; font-size: 15px; cursor:pointer; text-decoration:none; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    table { width:100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align:left; font-family: Impact, "Arial Black", sans-serif; font-weight: 400; color: var(--muted); padding: 10px; border-bottom: 2px solid var(--line); cursor: pointer; white-space: nowrap; }
+    td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    tr.p:hover td { background: rgba(255,255,255,.06); cursor: pointer; }
+    .rank { font-family: Impact, "Arial Black", sans-serif; font-size: 20px; width: 56px; text-align: center; }
+    .r1 { background: radial-gradient(ellipse at 50% 5%, #f7b733, #8a3d0c); }
+    .r2 { background: radial-gradient(ellipse at 50% 5%, #c16bff, #461a7e); }
+    .r3 { background: radial-gradient(ellipse at 50% 5%, #46b7ff, #103a8c); }
+    .chest { font-family: Impact, "Arial Black", sans-serif; font-size: 20px; color: var(--y); }
+    .name { font-weight: 700; font-size: 15px; }
+    .epic, .muted { color: var(--muted); font-size: 12px; }
+    .tag { display:inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; font-weight: 700; transform: skewX(-12deg); }
+    .on { background: #23a55a; } .off { background: #6b7280; } .hid { background: #b91c1c; }
+    tr.detail td { background: rgba(0,0,0,.22); }
+    .matches { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 6px; padding: 4px 0; }
+    .m { border-radius: 6px; padding: 6px 8px; font-size: 12px; }
+    .m b { font-family: Impact, "Arial Black", sans-serif; font-size: 18px; font-weight: 400; }
+    .t0 { background:#3b4352; } .t1 { background:#1f6b17; } .t2 { background:#13489e; } .t3 { background:#55208f; } .t4 { background:#9a4a0e; }
+    .foot { color: var(--muted); font-size: 12px; margin-top: 12px; }
+    @media (max-width: 760px) { .hide-sm { display:none; } h1 { font-size: 30px; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FORTNITE COMPANION · YÖNETİCİ</h1>
+  <div class="sub" id="sub"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="bar">
+    <input id="q" placeholder="Oyuncu veya Epic adı ara…">
+    <a class="btn" id="sheet" target="_blank">TABLOYU AÇ</a>
+    <span class="muted">Satıra tıklayınca son 30 maçı açılır. Birini sıralamadan çıkarmak için tabloda "Gizli" sütununa TRUE yazın.</span>
+  </div>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th data-k="displayName">OYUNCU</th><th data-k="totalChests">SANDIK</th><th data-k="totalMatches">MAÇ</th>
+          <th data-k="chestsPerMatch">S/MAÇ</th><th data-k="totalKills" class="hide-sm">KILL</th><th data-k="today" class="hide-sm">BUGÜN</th>
+          <th data-k="week" class="hide-sm">HAFTA</th><th data-k="bestMatch" class="hide-sm">EN İYİ</th><th data-k="updatedUtc">SON GÖRÜLME</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+  var DATA = <?!= dataJson ?>;
+  var sortKey = 'totalChests', sortDesc = true, open = {};
+  var nf = new Intl.NumberFormat('tr-TR');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ago(iso) {
+    if (!iso) return '—';
+    var m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (isNaN(m)) return '—';
+    if (m < 2) return 'şimdi'; if (m < 60) return m + ' dk önce';
+    var h = Math.round(m / 60); if (h < 48) return h + ' sa önce';
+    return Math.round(h / 24) + ' gün önce';
+  }
+  function tier(c) { return c < 8 ? 0 : c < 13 ? 1 : c < 18 ? 2 : c < 25 ? 3 : 4; }
+  function fmtDate(iso) { var d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+
+  function render() {
+    var q = document.getElementById('q').value.trim().toLowerCase();
+    var list = DATA.players.slice().sort(function (a, b) {
+      var x = a[sortKey], y = b[sortKey];
+      if (typeof x === 'string' || typeof y === 'string') { x = String(x || ''); y = String(y || ''); return sortDesc ? y.localeCompare(x, 'tr') : x.localeCompare(y, 'tr'); }
+      return sortDesc ? (y || 0) - (x || 0) : (x || 0) - (y || 0);
+    });
+    var visible = DATA.players.filter(function (p) { return !p.hidden; }).sort(function (a, b) { return b.totalChests - a.totalChests; });
+    var rankOf = {}; visible.forEach(function (p, i) { rankOf[p.deviceId] = i + 1; });
+    var html = '';
+    list.forEach(function (p) {
+      if (q && (p.displayName + ' ' + p.epicNames).toLowerCase().indexOf(q) < 0) return;
+      var r = rankOf[p.deviceId];
+      var active = p.updatedUtc && (Date.now() - new Date(p.updatedUtc).getTime()) < 3 * 86400000;
+      html += '<tr class="p" data-d="' + esc(p.deviceId) + '">' +
+        '<td class="rank ' + (r <= 3 ? 'r' + r : '') + '">' + (r ? '#' + r : '—') + '</td>' +
+        '<td><div class="name">' + esc(p.displayName) + ' ' + (p.hidden ? '<span class="tag hid">GİZLİ</span>' : active ? '<span class="tag on">AKTİF</span>' : '<span class="tag off">PASİF</span>') + '</div>' +
+        '<div class="epic">' + esc(p.epicNames || 'Epic adı yok') + ' · v' + esc(p.appVersion) + '</div></td>' +
+        '<td class="chest">' + nf.format(p.totalChests) + '</td>' +
+        '<td>' + nf.format(p.totalMatches) + '</td>' +
+        '<td>' + p.chestsPerMatch.toLocaleString('tr-TR', { maximumFractionDigits: 1 }) + '</td>' +
+        '<td class="hide-sm">' + nf.format(p.totalKills) + '</td>' +
+        '<td class="hide-sm">' + nf.format(p.today) + '</td>' +
+        '<td class="hide-sm">' + nf.format(p.week) + '</td>' +
+        '<td class="hide-sm">' + nf.format(p.bestMatch) + '</td>' +
+        '<td>' + ago(p.updatedUtc) + '<div class="muted">son maç: ' + (p.lastMatchUtc ? fmtDate(p.lastMatchUtc) : '—') + '</div></td></tr>';
+      if (open[p.deviceId]) {
+        var ms = (p.matches || []).map(function (m) {
+          return '<div class="m t' + tier(m.chests) + '"><b>' + m.chests + '</b> sandık' + (m.kills != null ? ' · ' + m.kills + ' kill' : '') +
+                 '<br>' + fmtDate(m.startedUtc) + (m.placement ? ' · #' + m.placement : '') + '<br><span class="muted">' + esc(m.source) + '</span></div>';
+        }).join('');
+        html += '<tr class="detail"><td></td><td colspan="9"><div class="matches">' + (ms || '<span class="muted">Henüz replay ile kaydedilmiş maç yok.</span>') + '</div></td></tr>';
+      }
+    });
+    document.getElementById('rows').innerHTML = html || '<tr><td colspan="10" class="muted" style="padding:20px">Henüz kimse veri göndermedi.</td></tr>';
+    Array.prototype.forEach.call(document.querySelectorAll('tr.p'), function (tr) {
+      tr.onclick = function () { var d = tr.getAttribute('data-d'); open[d] = !open[d]; render(); };
+    });
+  }
+
+  (function init() {
+    var vis = DATA.players.filter(function (p) { return !p.hidden; });
+    var sum = function (k) { return vis.reduce(function (a, p) { return a + (p[k] || 0); }, 0); };
+    var activeToday = vis.filter(function (p) { return p.today > 0; }).length;
+    document.getElementById('tiles').innerHTML =
+      '<div class="tile leg"><div class="l">TOPLAM SANDIK</div><div class="v">' + nf.format(sum('totalChests')) + '</div></div>' +
+      '<div class="tile epi"><div class="l">OYUNCU</div><div class="v">' + vis.length + '</div></div>' +
+      '<div class="tile rar"><div class="l">TOPLAM MAÇ</div><div class="v">' + nf.format(sum('totalMatches')) + '</div></div>' +
+      '<div class="tile unc"><div class="l">BUGÜN OYNAYAN</div><div class="v">' + activeToday + '</div></div>';
+    document.getElementById('sub').textContent = 'Veriler: ' + new Date(DATA.generatedUtc).toLocaleString('tr-TR') + ' · Yenilemek için sayfayı yeniden yükleyin.';
+    document.getElementById('sheet').href = DATA.sheetUrl;
+    document.getElementById('foot').textContent = 'Sayılar her oyuncunun kendi uygulamasından gelir (kendi replay\'leri + oyundaki sayaçtan girdiği başlangıç değeri). "Bugün" ve "Hafta" oyuncunun son eşitlemesindeki değerdir.';
+    document.getElementById('q').oninput = render;
+    Array.prototype.forEach.call(document.querySelectorAll('th[data-k]'), function (th) {
+      th.onclick = function () { var k = th.getAttribute('data-k'); if (sortKey === k) sortDesc = !sortDesc; else { sortKey = k; sortDesc = true; } render(); };
+    });
+    render();
+  })();
+</script>
+</body>
+</html>

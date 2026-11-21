@@ -29,7 +29,7 @@
             <TextBlock Text="EKİBİNİ KUR" Style="{StaticResource RibbonText}" />
           </Border>
           <TextBlock Style="{StaticResource BodyText}"
-                     Text="1. Ekip arkadaşların Fortnite Companion'ı kurup ilk açılışta kendini tanıtsın.&#10;2. Her biri EKİP → &quot;Ekip dosyasını dışa aktar&quot; ile bir dosya oluşturup grubunuza (Discord, WhatsApp) atsın.&#10;3. Sen &quot;EKİP DOSYASINI İÇE AKTAR&quot; ile bu dosyaları ekle. İstediğin kadar kişi olabilir; aynı dosyayı tekrar eklemek bir şeyi iki kez saymaz.&#10;İpucu: herkes, en son içe aktardığı dosyaları da içeren kendi dosyasını paylaşırsa tüm ekip birkaç adımda herkeste görünür." />
+                     Text="1. Ekip arkadaşların Fortnite Companion'ı kurup ilk açılışta kendini tanıtsın.&#10;2. Her biri EKİP → &quot;Ekip dosyasını dışa aktar&quot; ile bir dosya oluşturup grubunuza (Discord, WhatsApp) atsın.&#10;3. Sen &quot;EKİP DOSYASINI İÇE AKTAR&quot; ile bu dosyaları ekle. İstediğin kadar kişi olabilir; aynı dosyayı tekrar eklemek bir şeyi iki kez saymaz.&#10;Ekip sunucusu bağlıysa (Ayarlar → Ekip sunucusu) buna gerek yok: arkadaşların uygulamayı kurduğunda birkaç dakika içinde burada otomatik görünür." />
         </StackPanel>
       </Border>
 
@@ -53,7 +53,11 @@
                   <StackPanel>
                     <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DisplayFont}" FontSize="24" Foreground="White"
                                Effect="{StaticResource HardShadow}" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding TierName}" Style="{StaticResource TileLabel}" />
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding TierName}" Style="{StaticResource TileLabel}" />
+                      <TextBlock Text="  ☁ SUNUCU" Style="{StaticResource TileLabel}" Visibility="{Binding ServerVisibility}"
+                                 ToolTip="Sayılar bu oyuncunun kendi uygulamasından, ekip sunucusu üzerinden geliyor." />
+                    </StackPanel>
                   </StackPanel>
                 </DockPanel>
 
@@ -88,13 +92,14 @@
                 </Border>
                 <TextBlock Text="{Binding Best, StringFormat='En iyi maç: {0} sandık'}" Style="{StaticResource TileHint}" />
                 <TextBlock Text="{Binding EpicNames, StringFormat='Epic: {0}'}" Style="{StaticResource TileHint}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                <TextBlock Text="{Binding BaselineText}" Style="{StaticResource TileHint}" Margin="0,4,0,0" />
                 <TextBlock Text="{Binding SourceText}" Style="{StaticResource TileHint}" />
                 <Border Background="#CC1A0F00" CornerRadius="4" Padding="8,4" Margin="0,6,0,0"
                         Visibility="{Binding HasWarning, Converter={StaticResource BoolToVis}}">
                   <TextBlock Text="{Binding Warning}" Style="{StaticResource TileHint}" Foreground="#FFFFD27A" />
                 </Border>
 
-                <WrapPanel Margin="0,10,0,0">
+                <WrapPanel Margin="0,10,0,0" Visibility="{Binding LocalVisibility}">
                   <Button Content="Düzenle…" Tag="{Binding PlayerId}" Click="OnEditEpicNames" Padding="10,5" Background="#59000000" BorderBrush="#80FFFFFF" Foreground="White" />
                   <Button Content="Geçmiş…" Tag="{Binding PlayerId}" Click="OnEditBaseline" Padding="10,5" Background="#59000000" BorderBrush="#80FFFFFF" Foreground="White" />
                   <Button Content="Bu benim" Tag="{Binding PlayerId}" Click="OnSetSelf" Padding="10,5" Background="#59000000" BorderBrush="#80FFFFFF" Foreground="White" />
@@ -136,7 +141,10 @@
                           <TextBlock Text="SEN" Style="{StaticResource RibbonText}" FontSize="11" />
                         </Border>
                       </StackPanel>
-                      <TextBlock Text="{Binding EpicNames}" Style="{StaticResource HintText}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                      <TextBlock Style="{StaticResource HintText}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                        <Run Text="{Binding EpicNames, Mode=OneWay}" />
+                        <Run Text="{Binding ServerTag, Mode=OneWay}" Foreground="{DynamicResource BlueBrush}" />
+                      </TextBlock>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                       <Image Source="{StaticResource ChestIcon}" Width="20" Height="20" Margin="0,0,6,0" />
@@ -158,7 +166,8 @@
                       <TextBlock Text="KILL" Style="{StaticResource LabelText}" FontSize="10.5" />
                       <TextBlock Text="{Binding TotalKills}" FontFamily="{StaticResource DisplayFont}" FontSize="16" Foreground="{DynamicResource TextPrimary}" />
                     </StackPanel>
-                    <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,6,4,0">
+                    <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,6,4,0"
+                                Visibility="{Binding LocalVisibility}">
                       <Button Content="Düzenle…" Tag="{Binding PlayerId}" Click="OnEditEpicNames" Padding="9,4" />
                       <Button Content="Geçmiş…" Tag="{Binding PlayerId}" Click="OnEditBaseline" Padding="9,4" />
                       <Button Content="Bu benim" Tag="{Binding PlayerId}" Click="OnSetSelf" Padding="9,4" />

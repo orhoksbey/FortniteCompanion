@@ -15,6 +15,11 @@ public sealed class CompanionSnapshot
     public List<MatchRow> Matches { get; init; } = new();
     public List<MatchPlayerRow> Rows { get; init; } = new();
 
+    /// <summary>Ekip sunucusundan gelen oyuncular (kendi cihazım hariç).</summary>
+    public IReadOnlyList<RemotePlayer> Remote { get; init; } = Array.Empty<RemotePlayer>();
+
+    public TeamSyncStatus? SyncStatus { get; init; }
+
     /// <summary>Son maçta kaydeden oyuncunun takımının toplam sandığı (takım arkadaşları dahil).</summary>
     public int? LastMatchTeamChests { get; init; }
 
@@ -44,6 +49,8 @@ public sealed class CompanionService : IDisposable
     public AppSettings Settings { get; }
     public string SettingsPath { get; }
     public ReplayWatcher Watcher { get; }
+    public TeamSync Sync { get; }
+    private Timer? _syncTimer;
 
     public event Action<CompanionSnapshot>? SnapshotChanged;
     public event Action<NotificationKind, string, string>? Notify;
@@ -59,6 +66,12 @@ public sealed class CompanionService : IDisposable
         if (Settings.SelfPlayerId != null && Db.GetPlayers().All(p => p.Id != Settings.SelfPlayerId))
         {
             Settings.SelfPlayerId = null;
+            SaveSettings();
+        }
+
+        Sync = new TeamSync(Settings);
+        if (TeamSync.EnsureDeviceIdentity(Settings))
+        {
             SaveSettings();
         }
 
@@ -86,6 +99,22 @@ public sealed class CompanionService : IDisposable
     {
         Refresh();
         Watcher.Start();
+        // Ekip eşitlemesi: açılıştan 6 sn sonra, sonra 10 dakikada bir.
+        _syncTimer = new Timer(_ => _ = SyncTeamAsync(force: false), null, TimeSpan.FromSeconds(6), TimeSpan.FromMinutes(10));
+    }
+
+    /// <summary>Kendi özetini ekip sunucusuna gönderir ve sıralamayı alır (kapalı/ayarsızsa hiçbir şey yapmaz).</summary>
+    public async Task SyncTeamAsync(bool force)
+    {
+        try
+        {
+            await Sync.SyncAsync(Snapshot.Self, AutoUpdater.CurrentVersion.ToString(3), force).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Ekip eşitlemesi başarısız", ex);
+        }
+        PublishLight();
     }
 
     public void SaveSettings() => Settings.Save(SettingsPath);
@@ -122,6 +151,8 @@ public sealed class CompanionService : IDisposable
             Matches = matches,
             Rows = rows,
             LastMatchTeamChests = teamChests,
+            Remote = Sync.Remote,
+            SyncStatus = Sync.Status,
         };
 
         lock (_sync)
@@ -150,6 +181,8 @@ public sealed class CompanionService : IDisposable
                 Matches = old.Matches,
                 Rows = old.Rows,
                 LastMatchTeamChests = old.LastMatchTeamChests,
+                Remote = Sync.Remote,
+                SyncStatus = Sync.Status,
             };
             _snapshot = s;
         }
@@ -206,6 +239,7 @@ public sealed class CompanionService : IDisposable
         Settings.OnboardingDone = true;
         SaveSettings();
         Refresh();
+        _ = SyncTeamAsync(force: true);
         return Db.GetPlayers().First(p => p.Id == player.Id);
     }
 
@@ -234,6 +268,10 @@ public sealed class CompanionService : IDisposable
             }
 
             var snap = Refresh();
+            if (!e.Outcome.AlreadyCounted)
+            {
+                _ = SyncTeamAsync(force: true);
+            }
 
             if (e.Outcome.AlreadyCounted || e.Result.MatchStartUtc is DateTime st && DateTime.UtcNow - st > TimeSpan.FromHours(3))
             {
@@ -369,6 +407,7 @@ public sealed class CompanionService : IDisposable
 
     public void Dispose()
     {
+        _syncTimer?.Dispose();
         Watcher.Dispose();
     }
 }

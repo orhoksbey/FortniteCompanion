@@ -27,6 +27,7 @@ public sealed class OnboardingWindow : Window
     private readonly TextBox _kills = new() { Width = 120, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly TextBlock _error = new() { Foreground = Brushes.OrangeRed, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0) };
     private readonly TextBlock _importInfo = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
+    private readonly CheckBox _join = new() { Content = "Ekip sıralamasına katıl", IsChecked = true };
 
     public OnboardingWindow(CompanionService service)
     {
@@ -92,6 +93,19 @@ public sealed class OnboardingWindow : Window
         s3.Children.Add(grid);
         step3.Child = s3;
         root.Children.Add(step3);
+
+        // 4. adım: ekip sunucusu (yalnızca bu sürümde bir sunucu ayarlıysa)
+        if (_service.Sync.Configured)
+        {
+            var step4 = Card();
+            var s4 = new StackPanel();
+            s4.Children.Add(Section("4 · EKİP SIRALAMASI"));
+            _join.IsChecked = _service.Settings.TeamSyncEnabled;
+            s4.Children.Add(_join);
+            s4.Children.Add(Hint("Açıkken görünen adın, Epic adın, sandık/maç/kill sayıların ve maç listen ekip sunucusuna gönderilir; böylece ekip sıralamasında görünürsün ve ekibi görürsün. Rakip adları veya bilgisayar bilgisi gönderilmez. İstediğin zaman Ayarlar'dan kapatabilirsin."));
+            step4.Child = s4;
+            root.Children.Add(step4);
+        }
 
         root.Children.Add(_error);
 
@@ -248,6 +262,11 @@ public sealed class OnboardingWindow : Window
                 _error.Text = "Farklı bir görünen ad seç.";
                 return;
             }
+        }
+
+        if (_service.Sync.Configured)
+        {
+            _service.Settings.TeamSyncEnabled = _join.IsChecked == true;
         }
 
         try
