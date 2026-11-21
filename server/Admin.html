@@ -44,6 +44,15 @@
     .m b { font-family: Impact, "Arial Black", sans-serif; font-size: 18px; font-weight: 400; }
     .t0 { background:#3b4352; } .t1 { background:#1f6b17; } .t2 { background:#13489e; } .t3 { background:#55208f; } .t4 { background:#9a4a0e; }
     .foot { color: var(--muted); font-size: 12px; margin-top: 12px; }
+    .adj { color: #7cf29a; font-size: 12px; font-family: Bahnschrift, "Segoe UI", sans-serif; }
+    .adj.neg { color: #ff8a8a; }
+    .fix { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin: 4px 0 10px; padding: 10px; border-radius: 8px; background: rgba(255,225,77,.08); border: 1px dashed rgba(255,225,77,.45); }
+    .fix input { min-width: 0; }
+    .fix .num { width: 110px; } .fix .note { flex: 1; min-width: 180px; }
+    .msg { font-size: 13px; } .msg.err { color: #ff8a8a; } .msg.ok { color: #7cf29a; }
+    button.sec { background: rgba(255,255,255,.12); color:#fff; border-bottom-color: rgba(0,0,0,.35); }
+    button:disabled { opacity: .5; cursor: default; }
+    .log { margin-top: 16px; } .log td { font-size: 13px; }
     @media (max-width: 760px) { .hide-sm { display:none; } h1 { font-size: 30px; } }
   </style>
 </head>
@@ -54,8 +63,9 @@
   <div class="tiles" id="tiles"></div>
   <div class="bar">
     <input id="q" placeholder="Oyuncu veya Epic adı ara…">
+    <button id="refresh">YENİLE</button>
     <a class="btn" id="sheet" target="_blank">TABLOYU AÇ</a>
-    <span class="muted">Satıra tıklayınca son 30 maçı açılır. Birini sıralamadan çıkarmak için tabloda "Gizli" sütununa TRUE yazın.</span>
+    <span class="muted">Satıra tıklayınca son maçları ve <b>sandık ekle/çıkar</b> açılır. Birini sıralamadan çıkarmak için tabloda "Gizli" sütununa TRUE yazın.</span>
   </div>
   <div class="card">
     <table>
@@ -69,10 +79,18 @@
       <tbody id="rows"></tbody>
     </table>
   </div>
+  <div class="card log" id="logCard" style="display:none">
+    <table>
+      <thead><tr><th>SON DÜZELTMELER</th><th>OYUNCU</th><th>SANDIK</th><th>NOT</th></tr></thead>
+      <tbody id="log"></tbody>
+    </table>
+  </div>
   <div class="foot" id="foot"></div>
 </div>
 <script>
   var DATA = <?!= dataJson ?>;
+  var ADMIN_KEY = <?!= adminKeyJson ?>;
+  var busy = false;
   var sortKey = 'totalChests', sortDesc = true, open = {};
   var nf = new Intl.NumberFormat('tr-TR');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -105,7 +123,8 @@
         '<td class="rank ' + (r <= 3 ? 'r' + r : '') + '">' + (r ? '#' + r : '—') + '</td>' +
         '<td><div class="name">' + esc(p.displayName) + ' ' + (p.hidden ? '<span class="tag hid">GİZLİ</span>' : active ? '<span class="tag on">AKTİF</span>' : '<span class="tag off">PASİF</span>') + '</div>' +
         '<div class="epic">' + esc(p.epicNames || 'Epic adı yok') + ' · v' + esc(p.appVersion) + '</div></td>' +
-        '<td class="chest">' + nf.format(p.totalChests) + '</td>' +
+        '<td class="chest">' + nf.format(p.totalChests) +
+          (p.adjust ? '<div class="adj' + (p.adjust < 0 ? ' neg' : '') + '">' + (p.adjust > 0 ? '+' : '') + nf.format(p.adjust) + ' yönetici</div>' : '') + '</td>' +
         '<td>' + nf.format(p.totalMatches) + '</td>' +
         '<td>' + p.chestsPerMatch.toLocaleString('tr-TR', { maximumFractionDigits: 1 }) + '</td>' +
         '<td class="hide-sm">' + nf.format(p.totalKills) + '</td>' +
@@ -118,16 +137,72 @@
           return '<div class="m t' + tier(m.chests) + '"><b>' + m.chests + '</b> sandık' + (m.kills != null ? ' · ' + m.kills + ' kill' : '') +
                  '<br>' + fmtDate(m.startedUtc) + (m.placement ? ' · #' + m.placement : '') + '<br><span class="muted">' + esc(m.source) + '</span></div>';
         }).join('');
-        html += '<tr class="detail"><td></td><td colspan="9"><div class="matches">' + (ms || '<span class="muted">Henüz replay ile kaydedilmiş maç yok.</span>') + '</div></td></tr>';
+        var d = esc(p.deviceId);
+        html += '<tr class="detail"><td></td><td colspan="9">' +
+          '<div class="fix">' +
+            '<b>SANDIK DÜZELT</b>' +
+            '<input class="num" id="n-' + d + '" type="number" step="1" placeholder="+7 veya -3">' +
+            '<input class="note" id="t-' + d + '" placeholder="Neden (ör. oyun çöktü, görevde 923 yazıyor)">' +
+            '<button data-fix="' + d + '">UYGULA</button>' +
+            '<span class="muted">Uygulamadaki sayı: ' + nf.format(p.appChests || 0) + (p.adjust ? ' · toplam düzeltme: ' + (p.adjust > 0 ? '+' : '') + nf.format(p.adjust) : '') + '</span>' +
+            '<span class="msg" id="m-' + d + '"></span>' +
+          '</div>' +
+          '<div class="matches">' + (ms || '<span class="muted">Henüz replay ile kaydedilmiş maç yok.</span>') + '</div></td></tr>';
       }
     });
     document.getElementById('rows').innerHTML = html || '<tr><td colspan="10" class="muted" style="padding:20px">Henüz kimse veri göndermedi.</td></tr>';
     Array.prototype.forEach.call(document.querySelectorAll('tr.p'), function (tr) {
       tr.onclick = function () { var d = tr.getAttribute('data-d'); open[d] = !open[d]; render(); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('button[data-fix]'), function (b) {
+      b.onclick = function () { applyFix(b.getAttribute('data-fix'), b); };
+    });
+    renderLog();
   }
 
-  (function init() {
+  function renderLog() {
+    var list = DATA.adjustments || [];
+    document.getElementById('logCard').style.display = list.length ? '' : 'none';
+    document.getElementById('log').innerHTML = list.map(function (a) {
+      return '<tr><td>' + fmtDate(a.timeUtc) + '</td><td>' + esc(a.displayName) + '</td><td class="adj' + (a.delta < 0 ? ' neg' : '') + '">' +
+        (a.delta > 0 ? '+' : '') + nf.format(a.delta) + '</td><td class="muted">' + esc(a.note) + '</td></tr>';
+    }).join('');
+  }
+
+  function setData(json) {
+    DATA = JSON.parse(json);
+    summary();
+    render();
+  }
+
+  function applyFix(deviceId, btn) {
+    if (busy) return;
+    var n = parseInt(document.getElementById('n-' + deviceId).value, 10);
+    var note = document.getElementById('t-' + deviceId).value.trim();
+    var msg = document.getElementById('m-' + deviceId);
+    if (!n) { msg.className = 'msg err'; msg.textContent = 'Bir sayı girin: eklemek için 7, çıkarmak için -3.'; return; }
+    var p = DATA.players.filter(function (x) { return x.deviceId === deviceId; })[0];
+    if (!confirm((p ? p.displayName : 'Oyuncu') + ': ' + (n > 0 ? '+' : '') + n + ' sandık. Onaylıyor musun?')) return;
+    busy = true; btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Kaydediliyor…';
+    google.script.run
+      .withSuccessHandler(function (json) { busy = false; open[deviceId] = true; setData(json);
+        var m = document.getElementById('m-' + deviceId);
+        if (m) { m.className = 'msg ok'; m.textContent = 'Kaydedildi. Oyuncunun uygulamasına en geç ~10 dk içinde yansır.'; } })
+      .withFailureHandler(function (e) { busy = false; btn.disabled = false; msg.className = 'msg err'; msg.textContent = (e && e.message) || 'Kaydedilemedi.'; })
+      .adminAdjust(ADMIN_KEY, deviceId, n, note);
+  }
+
+  function refresh() {
+    if (busy) return;
+    busy = true;
+    var b = document.getElementById('refresh'); b.disabled = true; b.textContent = 'YENİLENİYOR…';
+    google.script.run
+      .withSuccessHandler(function (json) { busy = false; b.disabled = false; b.textContent = 'YENİLE'; setData(json); })
+      .withFailureHandler(function (e) { busy = false; b.disabled = false; b.textContent = 'YENİLE'; alert((e && e.message) || 'Yenilenemedi.'); })
+      .adminRefresh(ADMIN_KEY);
+  }
+
+  function summary() {
     var vis = DATA.players.filter(function (p) { return !p.hidden; });
     var sum = function (k) { return vis.reduce(function (a, p) { return a + (p[k] || 0); }, 0); };
     var activeToday = vis.filter(function (p) { return p.today > 0; }).length;
@@ -136,9 +211,15 @@
       '<div class="tile epi"><div class="l">OYUNCU</div><div class="v">' + vis.length + '</div></div>' +
       '<div class="tile rar"><div class="l">TOPLAM MAÇ</div><div class="v">' + nf.format(sum('totalMatches')) + '</div></div>' +
       '<div class="tile unc"><div class="l">BUGÜN OYNAYAN</div><div class="v">' + activeToday + '</div></div>';
-    document.getElementById('sub').textContent = 'Veriler: ' + new Date(DATA.generatedUtc).toLocaleString('tr-TR') + ' · Yenilemek için sayfayı yeniden yükleyin.';
+    document.getElementById('sub').textContent = 'Veriler: ' + new Date(DATA.generatedUtc).toLocaleString('tr-TR') + ' · 2 dakikada bir kendiliğinden yenilenir.';
+  }
+
+  (function init() {
+    summary();
+    document.getElementById('refresh').onclick = refresh;
+    setInterval(function () { if (!document.hidden) refresh(); }, 120000);
     document.getElementById('sheet').href = DATA.sheetUrl;
-    document.getElementById('foot').textContent = 'Sayılar her oyuncunun kendi uygulamasından gelir (kendi replay\'leri + oyundaki sayaçtan girdiği başlangıç değeri). "Bugün" ve "Hafta" oyuncunun son eşitlemesindeki değerdir.';
+    document.getElementById('foot').textContent = 'Sayılar her oyuncunun kendi uygulamasından gelir (kendi replay\'leri + oyundaki sayaçtan girdiği başlangıç değeri) + varsa yönetici düzeltmesi. Uygulama bir değişiklikten birkaç saniye sonra, ayrıca 10 dakikada bir veri gönderir.';
     document.getElementById('q').oninput = render;
     Array.prototype.forEach.call(document.querySelectorAll('th[data-k]'), function (th) {
       th.onclick = function () { var k = th.getAttribute('data-k'); if (sortKey === k) sortDesc = !sortDesc; else { sortKey = k; sortDesc = true; } render(); };

@@ -27,7 +27,7 @@ public sealed class OnboardingWindow : Window
     private readonly TextBox _kills = new() { Width = 120, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly TextBlock _error = new() { Foreground = Brushes.OrangeRed, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0) };
     private readonly TextBlock _importInfo = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
-    private readonly CheckBox _join = new() { Content = "Ekip sıralamasına katıl", IsChecked = true };
+    private readonly CheckBox _join = new() { Content = "Sandık sayılarımı yöneticiye gönder", IsChecked = true };
 
     public OnboardingWindow(CompanionService service)
     {
@@ -50,24 +50,13 @@ public sealed class OnboardingWindow : Window
         title.SetResourceReference(StyleProperty, "TitleText");
         header.Children.Add(title);
         root.Children.Add(header);
-        root.Children.Add(Hint("Kurulum 1 dakika sürer. Bilgilerin yalnızca bu bilgisayarda saklanır; ekip dosyasını paylaşmak sana kalmış."));
+        root.Children.Add(Hint("Kurulum 1 dakika sürer."));
 
-        // 1. adım: ekip dosyası
-        var step1 = Card();
-        var s1 = new StackPanel();
-        s1.Children.Add(Section("1 · EKİP DOSYAN VAR MI? (İSTEĞE BAĞLI)"));
-        s1.Children.Add(Hint("Ekibinden biri sana Fortnite Companion ekip dosyası (.json) gönderdiyse önce onu ekle; sonra listeden kendini seçebilirsin."));
-        var importButton = new Button { Content = "Ekip dosyasını içe aktar…", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0) };
-        importButton.Click += (_, _) => ImportTeamFile();
-        s1.Children.Add(importButton);
-        s1.Children.Add(_importInfo);
-        step1.Child = s1;
-        root.Children.Add(step1);
 
         // 2. adım: sen kimsin
         var step2 = Card();
         var s2 = new StackPanel();
-        s2.Children.Add(Section("2 · SEN KİMSİN?"));
+        s2.Children.Add(Section("1 · SEN KİMSİN?"));
         s2.Children.Add(Label("Listede varsan seç, yoksa yeni oyuncu"));
         s2.Children.Add(_who);
         s2.Children.Add(Label("Görünen ad (ekipte görünecek)"));
@@ -81,7 +70,7 @@ public sealed class OnboardingWindow : Window
         // 3. adım: başlangıç değerleri
         var step3 = Card();
         var s3 = new StackPanel();
-        s3.Children.Add(Section("3 · ŞU ANKİ SANDIK SAYIN"));
+        s3.Children.Add(Section("2 · ŞU ANKİ SANDIK SAYIN"));
         s3.Children.Add(Hint("Eski maçların replay'i olmadığı için başlangıç değerini oyundan al: Görevler → Hazine Avı. Hazine, Nadir ve Ruh sandığı sayaçlarının TOPLAMINI yaz. Bilmiyorsan boş bırak (0'dan başlar)."));
         var grid = new Grid { Margin = new Thickness(0, 8, 0, 0) };
         grid.ColumnDefinitions.Add(new ColumnDefinition());
@@ -99,10 +88,10 @@ public sealed class OnboardingWindow : Window
         {
             var step4 = Card();
             var s4 = new StackPanel();
-            s4.Children.Add(Section("4 · EKİP SIRALAMASI"));
+            s4.Children.Add(Section("3 · YÖNETİCİ PANELİ"));
             _join.IsChecked = _service.Settings.TeamSyncEnabled;
             s4.Children.Add(_join);
-            s4.Children.Add(Hint("Açıkken görünen adın, Epic adın, sandık/maç/kill sayıların ve maç listen ekip sunucusuna gönderilir; böylece ekip sıralamasında görünürsün ve ekibi görürsün. Rakip adları veya bilgisayar bilgisi gönderilmez. İstediğin zaman Ayarlar'dan kapatabilirsin."));
+            s4.Children.Add(Hint("Açıkken görünen adın, Epic adın, sandık/maç/kill sayıların ve maç listen ekip yöneticisinin paneline gönderilir. Rakip adları veya bilgisayar bilgisi gönderilmez. İstediğin zaman Ayarlar'dan kapatabilirsin."));
             step4.Child = s4;
             root.Children.Add(step4);
         }

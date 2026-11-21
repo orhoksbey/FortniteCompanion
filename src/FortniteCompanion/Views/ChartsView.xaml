@@ -5,14 +5,13 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel>
       <DockPanel Margin="6,0,6,8">
-        <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding ChartPlayerOptions}" SelectedItem="{Binding ChartPlayer}" Width="180" VerticalAlignment="Center" />
         <StackPanel>
           <TextBlock Text="GRAFİKLER" Style="{StaticResource TitleText}" />
           <TextBlock Text="Günlük/haftalık grafikler yalnızca tarihi bilinen yeni maçları içerir; geçmişten eklenen toplamlar tarihsiz olduğu için gelişim grafiğinde başlangıç seviyesi olarak gösterilir." Style="{StaticResource HintText}" />
         </StackPanel>
       </DockPanel>
 
-      <UniformGrid Columns="2">
+      <UniformGrid Columns="3">
         <Border Style="{StaticResource Card}">
           <StackPanel>
             <TextBlock Text="GÜNLÜK SANDIK (SON 14 GÜN)" Style="{StaticResource SectionText}" />
@@ -29,24 +28,6 @@
           <StackPanel>
             <TextBlock Text="MAÇ BAŞINA SANDIK DAĞILIMI" Style="{StaticResource SectionText}" />
             <c:BarChart Height="190" Items="{Binding DistributionPoints}" BarBrush="{DynamicResource GreenBrush}" TextBrush="{DynamicResource TextSecondary}" />
-          </StackPanel>
-        </Border>
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock Text="EKİP: TOPLAM SANDIK" Style="{StaticResource SectionText}" />
-            <c:BarChart Height="190" Items="{Binding ComparePoints}" BarBrush="{DynamicResource AccentBrush}" TextBrush="{DynamicResource TextSecondary}" ValueFormat="N0" />
-          </StackPanel>
-        </Border>
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock Text="EKİP: SANDIK / MAÇ" Style="{StaticResource SectionText}" />
-            <c:BarChart Height="190" Items="{Binding CompareAvgPoints}" BarBrush="{DynamicResource GreenBrush}" TextBrush="{DynamicResource TextSecondary}" ValueFormat="0.0" />
-          </StackPanel>
-        </Border>
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock Text="EKİP: TOPLAM KILL" Style="{StaticResource SectionText}" />
-            <c:BarChart Height="190" Items="{Binding CompareKillPoints}" BarBrush="{DynamicResource PurpleBrush}" TextBrush="{DynamicResource TextSecondary}" ValueFormat="N0" />
           </StackPanel>
         </Border>
       </UniformGrid>

@@ -52,9 +52,19 @@ https://script.google.com/macros/s/…/exec?admin=YÖNETİCİ_ANAHTARI
 
 - Herkesin toplam sandığı, maçı, kill'i, bugün/hafta değerleri, son görülme zamanı ve uygulama sürümü
 - Satıra tıklayınca o oyuncunun son 30 maçı
+- **Sandık ekle/çıkar:** satıra tıkla → *SANDIK DÜZELT* kutusuna `7` (ekle) veya `-3` (çıkar) ve nedenini yaz → **UYGULA**.
+  Düzeltme "Duzeltmeler" sayfasına kaydedilir; oyuncunun uygulamasına en geç ~10 dakikada gelir ve orada
+  "Yönetici düzeltmesi" olarak görünür.
+- **YENİLE** düğmesi (sayfa ayrıca 2 dakikada bir kendini yeniler)
 - Birini sıralamadan çıkarmak: tabloda **Oyuncular** sayfası → **Gizli** sütununa `TRUE`
 
 Bu bağlantıyı yer imlerine ekleyin; **anahtarı kimseyle paylaşmayın**.
+
+## Sunucu kodunu güncelleme (ör. v0.6.0)
+
+1. Apps Script'te `Code.gs` ve `Admin` dosyalarının içeriğini silip yenilerini yapıştırın → **Kaydet**.
+2. **Dağıt → Dağıtımları yönet → ✏️ (Düzenle) → Sürüm: Yeni sürüm → Dağıt.** URL ve anahtarlar aynı kalır.
+3. `setup`'ı yeniden çalıştırmanıza gerek yok; eksik sütun ve sayfalar (Duzeltme, Duzeltmeler) ilk istekte kendiliğinden eklenir.
 
 ## Gönderilen veriler
 

@@ -299,6 +299,9 @@ public sealed class MainViewModel : ObservableObject
 
     private List<TeamEntry> _teamEntries = new();
 
+    private string _selfAdjustText = "";
+    public string SelfAdjustText { get => _selfAdjustText; private set => Set(ref _selfAdjustText, value); }
+
     private string _selfRankText = "";
     public string SelfRankText { get => _selfRankText; private set => Set(ref _selfRankText, value); }
 
@@ -362,7 +365,9 @@ public sealed class MainViewModel : ObservableObject
         TotalChestsSource = self == null ? "" :
             $"Önceki istatistikten aktarıldı: {Fmt.N(self.BaselineChests)} · Replay ile doğrulandı: {Fmt.N(self.ReplayVerifiedChests)}" +
             (self.PartialChests > 0 ? $" · Tahmini (takım replay'i): {Fmt.N(self.PartialChests)}" : "") +
-            (self.ManualChests > 0 ? $" · Manuel girildi: {Fmt.N(self.ManualChests)}" : "");
+            (self.ManualChests > 0 ? $" · Manuel girildi: {Fmt.N(self.ManualChests)}" : "") +
+            (self.AdminChests != 0 ? $" · Yönetici düzeltmesi: {(self.AdminChests > 0 ? "+" : "")}{Fmt.N(self.AdminChests)}" : "");
+        SelfAdjustText = self is { AdminChests: not 0 } ? $"Yönetici düzeltmesi: {(self.AdminChests > 0 ? "+" : "")}{Fmt.N(self.AdminChests)} sandık" : "";
         TotalMatches = Fmt.N(self?.TotalMatches ?? 0);
         AvgChests = Fmt.D1(self?.ChestsPerMatch ?? 0);
         AvgKills = Fmt.D1(self?.KillsPerMatch ?? 0);
@@ -525,7 +530,7 @@ public sealed class MainViewModel : ObservableObject
     private void BuildCharts()
     {
         var s = _snapshot;
-        var p = s.Players.FirstOrDefault(x => x.Player.DisplayName == ChartPlayer);
+        var p = s.Self;
         var today = DateTime.Now.Date;
 
         // Günlük (son 14 gün)
@@ -558,13 +563,8 @@ public sealed class MainViewModel : ObservableObject
                 counted.Count(m => m.Chests >= b.Item1 && m.Chests <= b.Item2)))
             .ToList();
 
-        // Dört oyuncu karşılaştırması
-        // Karşılaştırma: ekip sunucusundakiler dahil birleşik sıralama
-        var board = _teamEntries.Where(e => !e.Hidden || e.IsSelf).ToList();
-        ComparePoints = board.Select(x => new ChartPoint(x.Name, x.TotalChests)).ToList();
-        CompareAvgPoints = board.Select(x => new ChartPoint(x.Name, Math.Round(x.ChestsPerMatch, 1))).ToList();
-        CompareKillPoints = board.Select(x => new ChartPoint(x.Name, x.TotalKills)).ToList();
-        var team = VisiblePlayers(s).OrderByDescending(x => x.TotalChests).ToList();
+        // Yalnızca kendi verim (ekip karşılaştırması yönetici panelinde)
+        var team = p == null ? new List<PlayerStats>() : new List<PlayerStats> { p };
 
         // Zaman içindeki gelişim: geçmiş değerden başlayan kümülatif toplam (son 30 gün)
         var colors = new[] { "#FFFFC83D", "#FF3FA9FF", "#FF3DDC84", "#FFB57CFF", "#FFFF7A59", "#FF4DE1D2" };
@@ -574,7 +574,7 @@ public sealed class MainViewModel : ObservableObject
         ProgressSeries = team.Take(6).Select((x, idx) =>
         {
             var before = x.DailyChests.Where(kv => kv.Key < days[0]).Sum(kv => kv.Value);
-            double running = x.BaselineChests + before;
+            double running = x.BaselineChests + x.AdminChests + before;
             var values = new List<double>();
             foreach (var d in days)
             {

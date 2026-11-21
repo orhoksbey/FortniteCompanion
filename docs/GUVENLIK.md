@@ -9,7 +9,7 @@
 | Fortnite açık mı | `Process.GetProcessesByName("FortniteClient-Win64-Shipping")` — yalnızca işlem listesi | Oyun işlemine tutamaç açılmaz, bellek okunmaz |
 | Global kısayol | Win32 `RegisterHotKey` — Windows yalnızca kayıtlı kombinasyon basılınca haber verir | Tuş okuma/kaydetme yok, oyuna tuş gönderme yok |
 | Bildirim | Sistem tepsisi balonu | Yok |
-| Ağ | (1) Güncelleme: GitHub'daki kendi deponuzun sürüm bilgisi okunur, EXE indirilir (boyut/SHA-256 doğrulanır). (2) Ekip sunucusu (ayarlıysa): kendi Google Apps Script adresinize oyuncunun kendi özeti gönderilir (ad, Epic adı, sandık/maç/kill, kendi maç listesi). Rakip adları, bilgisayar veya Epic hesap bilgisi gönderilmez. İkisi de Ayarlar'dan kapatılabilir | Yok |
+| Ağ | (1) Güncelleme: GitHub'daki kendi deponuzun sürüm bilgisi okunur, EXE indirilir (boyut/SHA-256 doğrulanır). (2) Yönetici paneli (ayarlıysa): kendi Google Apps Script adresinize oyuncunun kendi özeti gönderilir (ad, Epic adı, sandık/maç/kill, kendi maç listesi); yanıtta yalnızca yöneticinin bu oyuncuya yaptığı sandık düzeltmesi geri gelir. Rakip adları, bilgisayar veya Epic hesap bilgisi gönderilmez. İkisi de Ayarlar'dan kapatılabilir | Yok |
 
 ## Kesinlikle yapılmayanlar
 

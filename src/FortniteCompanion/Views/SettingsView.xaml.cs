@@ -188,10 +188,10 @@ public partial class SettingsView : UserControl
     private void UpdateSyncInfo()
     {
         var st = Service.Sync.Status;
-        SyncInfo.Text = !st.Configured ? "Sunucu ayarlı değil: arkadaşlarla dosya (JSON) ile paylaşım kullanılıyor."
+        SyncInfo.Text = !st.Configured ? "Sunucu ayarlı değil: bu sürümde yönetici paneline gönderim yok."
             : !st.Enabled ? "Kapalı: veri gönderilmiyor."
             : st.LastError != null ? "Son deneme başarısız: " + st.LastError
-            : st.LastSuccessUtc != null ? $"Bağlı · {TeamSync.Ago(st.LastSuccessUtc)} eşitlendi · ekipte {st.RemoteCount} kişi daha"
+            : st.LastSuccessUtc != null ? $"Bağlı · {TeamSync.Ago(st.LastSuccessUtc)} gönderildi"
             : "Bağlanılıyor…";
     }
 
@@ -202,6 +202,10 @@ public partial class SettingsView : UserControl
         await Service.SyncTeamAsync(force: true);
         UpdateSyncInfo();
     }
+
+    private void OnFixTotal(object sender, RoutedEventArgs e) => ProfileDialogs.FixTotal(Window.GetWindow(this));
+
+    private void OnEditBaseline(object sender, RoutedEventArgs e) => ProfileDialogs.EditBaseline(Window.GetWindow(this));
 
     private void OnOnboarding(object sender, RoutedEventArgs e)
     {

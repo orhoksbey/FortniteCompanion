@@ -89,6 +89,9 @@ public sealed class TeamSync
 
     public IReadOnlyList<RemotePlayer> Remote => _remote;
 
+    /// <summary>Son başarılı gönderimde sunucunun bildirdiği yönetici düzeltmesi (eski sunucu sürümünde null).</summary>
+    public int? ServerAdjustChests { get; private set; }
+
     public TeamSync(AppSettings settings)
     {
         _settings = settings;
@@ -138,10 +141,10 @@ public sealed class TeamSync
             AppVersion = appVersion,
             DisplayName = self.Player.DisplayName,
             EpicNames = self.Player.EpicNames,
-            TotalChests = self.TotalChests,
+            TotalChests = self.TotalChests - self.AdminChests,
             TotalMatches = self.TotalMatches,
             TotalKills = self.TotalKills,
-            ChestsPerMatch = Math.Round(self.ChestsPerMatch, 2),
+            ChestsPerMatch = self.TotalMatches == 0 ? 0 : Math.Round((double)(self.TotalChests - self.AdminChests) / self.TotalMatches, 2),
             KillsPerMatch = Math.Round(self.KillsPerMatch, 2),
             Today = self.Today,
             Week = self.ThisWeek,
@@ -211,7 +214,7 @@ public sealed class TeamSync
             }
             else
             {
-                body = new { action = "leaderboard", key = Key };
+                return false; // kendi oyuncusu seçilmemiş: gönderilecek bir şey yok
             }
 
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
@@ -245,6 +248,10 @@ public sealed class TeamSync
             _remote = (parsed.Players ?? new List<RemotePlayer>())
                 .Where(p => !string.Equals(p.DeviceId, own, StringComparison.OrdinalIgnoreCase))
                 .ToList();
+            if (self != null && parsed.Self != null)
+            {
+                ServerAdjustChests = parsed.Self.AdjustChests;
+            }
             LastSuccessUtc = DateTime.UtcNow;
             LastError = null;
             if (signature != null)
@@ -270,6 +277,12 @@ public sealed class TeamSync
         public bool Ok { get; set; }
         public string? Error { get; set; }
         public List<RemotePlayer>? Players { get; set; }
+        public SelfInfo? Self { get; set; }
+    }
+
+    private sealed class SelfInfo
+    {
+        public int AdjustChests { get; set; }
     }
 
     public static string Ago(DateTime? utc)

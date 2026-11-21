@@ -29,7 +29,7 @@ Ayrıntılı kurulum: [docs/KURULUM.md](docs/KURULUM.md) · Ekibe otomatik günc
   aynı maç iki kez sayılmaz.
 - Mühimmat kutuları ve diğer konteynerler (soğutucu, varil, yemek kutusu) sandık toplamına dahil edilmez, ayrı gösterilir.
 
-## Ekip ve geçmiş veriler
+## Kurulum ve geçmiş veriler
 
 Uygulama herkese açıktır; sabit bir oyuncu listesi yoktur. İlk açılışta **"Sen kimsin?"** ekranı çıkar:
 görünen ad, Epic adı ve oyundaki görev sayacından (Görevler → Hazine Avı: hazine + nadir + ruh sandıkları)
@@ -38,12 +38,13 @@ değer **"Önceki istatistikten aktarıldı"** olarak saklanır.
 
 **Toplam = başlangıç değeri + başlangıç tarihinden sonraki yeni ve benzersiz maçlar.**
 
-**Ekip sunucusu (önerilen):** Google Sheets + Apps Script ile ücretsiz bir ekip sunucusu kurulursa herkesin uygulaması
-kendi toplamlarını oraya gönderir ve ekip sıralamasını oradan alır; yönetici de herkesi bir web panelinden görür.
-Kurulum: [server/KURULUM.md](server/KURULUM.md). Oyuncular Ayarlar'dan katılımı kapatabilir.
+**Yönetici paneli:** Google Sheets + Apps Script ile ücretsiz bir sunucu kurulursa herkesin uygulaması kendi toplamlarını
+oraya gönderir; yönetici herkesi bir web panelinden görür ve gerekirse bir oyuncuya sandık ekleyip çıkarabilir (oyuncunun
+uygulamasına "Yönetici düzeltmesi" olarak geri gelir). Uygulamada ayrı bir ekip sekmesi yoktur.
+Kurulum: [server/KURULUM.md](server/KURULUM.md). Oyuncular Ayarlar'dan gönderimi kapatabilir.
 
-Sunucu yoksa ekip arkadaşları **EKİP → Ekip dosyasını dışa aktar** ile bir JSON dosyası paylaşır, diğerleri içe aktarır. Ekip
-istenen kadar kişi olabilir; ilk üç kürsüde, diğerleri sıralama listesinde gösterilir. Ayrılan biri silinmez, gizlenir.
+**Sayacı düzeltme:** Oyun çöktüğünde o maçın replay'i yarım kalır ve okunamaz. Genel Bakış → **Oyundaki sayıya eşitle**
+ile oyundaki sandık görevinde yazan sayıyı girersin; fark geçmiş değere eklenir, maç sayısı değişmez.
 
 ## Güvenlik
 

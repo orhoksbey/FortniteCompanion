@@ -10,6 +10,11 @@
  *  POST {action:"push", key, payload}        → oyuncunun kendi toplamlarını yazar, sıralamayı döndürür
  *  GET  ?action=leaderboard&key=EKİP_ANAHTARI → sıralama (JSON)
  *  GET  ?admin=YÖNETİCİ_ANAHTARI              → yönetici paneli (HTML)
+ *  google.script.run.adminAdjust(...)         → yönetici bir oyuncuya sandık ekler/çıkarır (panelden)
+ *
+ * Yönetici düzeltmesi: "Duzeltme" sütununda oyuncu başına birikimli tutulur, her işlem "Duzeltmeler" sayfasına
+ * yazılır. Oyuncunun uygulaması kendi toplamını (düzeltmesiz) gönderir; sunucu düzeltmeyi üstüne ekler ve
+ * push yanıtında oyuncuya geri bildirir, böylece oyuncunun ekranındaki sayı da aynı olur.
  *
  * Güvenlik: EKİP anahtarı uygulamaya gömülüdür ve rastgele istekleri engeller. Her cihaz kendi gizli anahtarını
  * üretir; bir oyuncunun satırını yalnızca o cihaz güncelleyebilir (sunucuda yalnızca SHA-256 özeti saklanır).
@@ -21,8 +26,9 @@ const PLAYER_HEADERS = [
   'DeviceId', 'SecretHash', 'DisplayName', 'EpicNames', 'TotalChests', 'TotalMatches', 'TotalKills',
   'ChestsPerMatch', 'KillsPerMatch', 'Today', 'Week', 'Season', 'BestMatch', 'BaselineChests',
   'BaselineMatches', 'BaselineKills', 'TrackedMatches', 'TrackedChests', 'LastMatchUtc', 'UpdatedUtc',
-  'AppVersion', 'Gizli', 'FirstSeenUtc'
+  'AppVersion', 'Gizli', 'FirstSeenUtc', 'Duzeltme'
 ];
+const ADJUST_HEADERS = ['TimeUtc', 'DeviceId', 'DisplayName', 'Delta', 'NewTotalAdjust', 'Note'];
 const MATCH_HEADERS = [
   'DeviceId', 'DisplayName', 'SessionId', 'StartedUtc', 'Chests', 'Kills', 'Source', 'Playlist',
   'Placement', 'DurationSeconds', 'ReceivedUtc'
@@ -33,7 +39,8 @@ const MAX_MATCHES_PER_PUSH = 300;
 // sayıya çevirmesin.
 const TEXT_COLUMNS = {
   Oyuncular: ['DeviceId', 'SecretHash', 'DisplayName', 'EpicNames', 'LastMatchUtc', 'UpdatedUtc', 'AppVersion', 'FirstSeenUtc'],
-  Maclar: ['DeviceId', 'DisplayName', 'SessionId', 'StartedUtc', 'Source', 'Playlist', 'ReceivedUtc']
+  Maclar: ['DeviceId', 'DisplayName', 'SessionId', 'StartedUtc', 'Source', 'Playlist', 'ReceivedUtc'],
+  Duzeltmeler: ['TimeUtc', 'DeviceId', 'DisplayName', 'Note']
 };
 
 // ---------------------------------------------------------------- kurulum
@@ -44,6 +51,7 @@ function setup() {
   if (!props.getProperty('ADMIN_KEY')) props.setProperty('ADMIN_KEY', 'adm-' + Utilities.getUuid().replace(/-/g, ''));
   sheet_('Oyuncular', PLAYER_HEADERS);
   sheet_('Maclar', MATCH_HEADERS);
+  sheet_('Duzeltmeler', ADJUST_HEADERS);
   Logger.log('EKİP ANAHTARI (uygulamaya): ' + props.getProperty('TEAM_KEY'));
   Logger.log('YÖNETİCİ ANAHTARI (yalnızca sizde kalsın): ' + props.getProperty('ADMIN_KEY'));
 }
@@ -61,6 +69,13 @@ function sheet_(name, headers) {
       const c = headers.indexOf(h) + 1;
       if (c > 0) sh.getRange(1, c, sh.getMaxRows(), 1).setNumberFormat('@');
     });
+  } else {
+    // Eski sürümden kalan tablo: eksik sütunları sona ekle (veriler korunur)
+    const have = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    const missing = headers.filter(function (h) { return have.indexOf(h) < 0; });
+    if (missing.length > 0) {
+      sh.getRange(1, have.length + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
+    }
   }
   return sh;
 }
@@ -73,6 +88,7 @@ function doGet(e) {
   if (p.admin && p.admin === props.getProperty('ADMIN_KEY')) {
     const t = HtmlService.createTemplateFromFile('Admin');
     t.dataJson = JSON.stringify(adminData_());
+    t.adminKeyJson = JSON.stringify(String(p.admin));
     return t.evaluate()
       .setTitle('Fortnite Companion — Yönetici')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -101,14 +117,20 @@ function doPost(e) {
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return json_({ ok: false, error: 'sunucu meşgul, daha sonra tekrar denenecek' });
+  let result;
   try {
-    const result = upsertPlayer_(body.payload);
+    result = upsertPlayer_(body.payload);
     if (!result.ok) return json_(result);
     upsertMatches_(body.payload);
   } finally {
     lock.releaseLock();
   }
-  return json_({ ok: true, serverTimeUtc: new Date().toISOString(), players: leaderboard_() });
+  return json_({
+    ok: true,
+    serverTimeUtc: new Date().toISOString(),
+    self: { adjustChests: result.adjust || 0 },
+    players: leaderboard_()
+  });
 }
 
 function json_(obj) {
@@ -124,6 +146,7 @@ function sha256_(text) {
 
 function str_(v, max) { return String(v == null ? '' : v).slice(0, max || 100); }
 function iso_(v) { return v instanceof Date ? v.toISOString() : (v ? String(v) : null); }
+function sint_(v) { const n = Math.trunc(Number(v)); return isFinite(n) && Math.abs(n) < 1000000 ? n : 0; }
 function int_(v) { const n = Math.floor(Number(v)); return isFinite(n) && n >= 0 && n < 10000000 ? n : 0; }
 function num_(v) { const n = Number(v); return isFinite(n) && n >= 0 && n < 100000 ? Math.round(n * 100) / 100 : 0; }
 
@@ -147,7 +170,7 @@ function upsertPlayer_(p) {
     return { ok: false, error: 'bu cihaz kimliği başka bir cihaza ait' };
   }
 
-  const row = rowIndex > 0 ? data[rowIndex].slice() : PLAYER_HEADERS.map(function () { return ''; });
+  const row = rowIndex > 0 ? data[rowIndex].slice() : data[0].map(function () { return ''; });
   const set = function (k, v) { row[col[k]] = v; };
   set('DeviceId', deviceId);
   set('SecretHash', hash);
@@ -173,11 +196,12 @@ function upsertPlayer_(p) {
   if (rowIndex < 0) {
     set('Gizli', false);
     set('FirstSeenUtc', now);
+    set('Duzeltme', 0);
     sh.appendRow(row);
   } else {
     sh.getRange(rowIndex + 1, 1, 1, row.length).setValues([row]);
   }
-  return { ok: true };
+  return { ok: true, adjust: sint_(row[col.Duzeltme]) };
 }
 
 function upsertMatches_(p) {
@@ -229,14 +253,19 @@ function players_() {
   for (let i = 1; i < data.length; i++) {
     const r = data[i];
     if (!r[col.DeviceId]) continue;
+    const appChests = Number(r[col.TotalChests]) || 0;
+    const adjust = col.Duzeltme == null ? 0 : sint_(r[col.Duzeltme]);
+    const matches = Number(r[col.TotalMatches]) || 0;
     out.push({
       deviceId: String(r[col.DeviceId]),
       displayName: r[col.DisplayName],
       epicNames: r[col.EpicNames],
-      totalChests: Number(r[col.TotalChests]) || 0,
-      totalMatches: Number(r[col.TotalMatches]) || 0,
+      totalChests: Math.max(0, appChests + adjust),
+      appChests: appChests,
+      adjust: adjust,
+      totalMatches: matches,
       totalKills: Number(r[col.TotalKills]) || 0,
-      chestsPerMatch: Number(r[col.ChestsPerMatch]) || 0,
+      chestsPerMatch: matches > 0 ? Math.round(Math.max(0, appChests + adjust) / matches * 100) / 100 : 0,
       killsPerMatch: Number(r[col.KillsPerMatch]) || 0,
       today: Number(r[col.Today]) || 0,
       week: Number(r[col.Week]) || 0,
@@ -285,5 +314,63 @@ function adminData_() {
       .sort(function (a, b) { return b.startedUtc < a.startedUtc ? -1 : 1; })
       .slice(0, 30);
   });
-  return { generatedUtc: new Date().toISOString(), players: players, sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl() };
+  const log = sheet_('Duzeltmeler', ADJUST_HEADERS).getDataRange().getValues();
+  const lcol = indexOf_(log[0]);
+  const adjustments = [];
+  for (let i = log.length - 1; i >= 1 && adjustments.length < 30; i--) {
+    adjustments.push({
+      timeUtc: iso_(log[i][lcol.TimeUtc]), deviceId: String(log[i][lcol.DeviceId]),
+      displayName: String(log[i][lcol.DisplayName]), delta: sint_(log[i][lcol.Delta]), note: String(log[i][lcol.Note] || '')
+    });
+  }
+  return {
+    generatedUtc: new Date().toISOString(), players: players, adjustments: adjustments,
+    sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl()
+  };
+}
+
+// ---------------------------------------------------------------- yönetici işlemleri (panelden google.script.run)
+
+function requireAdmin_(adminKey) {
+  const k = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+  if (!k || String(adminKey) !== k) throw new Error('Yönetici anahtarı geçersiz.');
+}
+
+/** Paneldeki "Yenile" düğmesi. */
+function adminRefresh(adminKey) {
+  requireAdmin_(adminKey);
+  return JSON.stringify(adminData_());
+}
+
+/**
+ * Bir oyuncuya sandık ekler (pozitif) veya çıkarır (negatif). Birikimli "Duzeltme" sütununa eklenir ve
+ * "Duzeltmeler" sayfasına kaydedilir. Oyuncunun uygulaması bir sonraki eşitlemede (en geç ~10 dk) bunu alır.
+ */
+function adminAdjust(adminKey, deviceId, delta, note) {
+  requireAdmin_(adminKey);
+  const d = sint_(delta);
+  if (d === 0 || Math.abs(d) > 100000) throw new Error('Geçerli bir sayı girin (ör. 7 veya -3).');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('Sunucu meşgul, tekrar deneyin.');
+  try {
+    const sh = sheet_('Oyuncular', PLAYER_HEADERS);
+    const data = sh.getDataRange().getValues();
+    const col = indexOf_(data[0]);
+    let rowIndex = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][col.DeviceId]) === String(deviceId)) { rowIndex = i; break; }
+    }
+    if (rowIndex < 0) throw new Error('Oyuncu bulunamadı.');
+    const current = sint_(data[rowIndex][col.Duzeltme]);
+    const appChests = Number(data[rowIndex][col.TotalChests]) || 0;
+    const next = current + d;
+    if (appChests + next < 0) throw new Error('Toplam sandık sıfırın altına düşemez.');
+    sh.getRange(rowIndex + 1, col.Duzeltme + 1).setValue(next);
+    sheet_('Duzeltmeler', ADJUST_HEADERS).appendRow([
+      new Date().toISOString(), String(deviceId), String(data[rowIndex][col.DisplayName]), d, next, str_(note, 200)
+    ]);
+  } finally {
+    lock.releaseLock();
+  }
+  return JSON.stringify(adminData_());
 }

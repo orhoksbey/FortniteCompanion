@@ -46,7 +46,6 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
           <RadioButton x:Name="NavOverview" Content="GENEL BAKIŞ" Style="{StaticResource NavButton}" GroupName="nav" IsChecked="True" Checked="OnNav" />
           <RadioButton x:Name="NavMatches" Content="MAÇ GEÇMİŞİ" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
-          <RadioButton x:Name="NavFriends" Content="EKİP" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
           <RadioButton x:Name="NavCharts" Content="GRAFİKLER" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
           <RadioButton x:Name="NavSettings" Content="AYARLAR" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
         </StackPanel>
@@ -104,7 +103,6 @@
     <Grid Grid.Row="2" Margin="22,16,22,12">
       <views:OverviewView x:Name="OverviewPage" />
       <views:MatchesView x:Name="MatchesPage" Visibility="Collapsed" />
-      <views:FriendsView x:Name="FriendsPage" Visibility="Collapsed" />
       <views:ChartsView x:Name="ChartsPage" Visibility="Collapsed" />
       <views:SettingsView x:Name="SettingsPage" Visibility="Collapsed" />
     </Grid>

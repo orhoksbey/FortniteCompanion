@@ -51,6 +51,7 @@ public sealed class CompanionService : IDisposable
     public ReplayWatcher Watcher { get; }
     public TeamSync Sync { get; }
     private Timer? _syncTimer;
+    private Timer? _pushSoon;
 
     public event Action<CompanionSnapshot>? SnapshotChanged;
     public event Action<NotificationKind, string, string>? Notify;
@@ -101,6 +102,8 @@ public sealed class CompanionService : IDisposable
         Watcher.Start();
         // Ekip eşitlemesi: açılıştan 6 sn sonra, sonra 10 dakikada bir.
         _syncTimer = new Timer(_ => _ = SyncTeamAsync(force: false), null, TimeSpan.FromSeconds(6), TimeSpan.FromMinutes(10));
+        // Veri değişince (maç, düzeltme, ayar) birkaç saniye sonra gönder; değişiklik yoksa imza kontrolü gönderimi atlar.
+        _pushSoon = new Timer(_ => _ = SyncTeamAsync(force: false), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
     }
 
     /// <summary>Kendi özetini ekip sunucusuna gönderir ve sıralamayı alır (kapalı/ayarsızsa hiçbir şey yapmaz).</summary>
@@ -113,6 +116,18 @@ public sealed class CompanionService : IDisposable
         catch (Exception ex)
         {
             AppLog.Error("Ekip eşitlemesi başarısız", ex);
+        }
+
+        // Yönetici panelden sandık ekleyip çıkardıysa kendi toplamıma yansıt.
+        if (Sync.ServerAdjustChests is int adjust && adjust != Settings.AdminChestAdjust)
+        {
+            var diff = adjust - Settings.AdminChestAdjust;
+            Settings.AdminChestAdjust = adjust;
+            SaveSettings();
+            Refresh();
+            Notify?.Invoke(NotificationKind.Info, "Yönetici sandık sayını düzeltti",
+                $"{(diff > 0 ? "+" : "")}{diff} sandık (toplam yönetici düzeltmesi: {(adjust > 0 ? "+" : "")}{adjust}).");
+            return;
         }
         PublishLight();
     }
@@ -130,6 +145,10 @@ public sealed class CompanionService : IDisposable
         var rows = Db.GetMatchPlayers();
         var stats = StatsService.Compute(players, baselines, matches, rows, Settings.ToStatsOptions());
         var self = stats.FirstOrDefault(s => s.Player.Id == Settings.SelfPlayerId);
+        if (self != null)
+        {
+            self.AdminChests = Settings.AdminChestAdjust;
+        }
         var live = Settings.SelfPlayerId is long sid ? Db.GetOpenLiveSession(sid) : null;
 
         int? teamChests = null;
@@ -160,6 +179,7 @@ public sealed class CompanionService : IDisposable
             _snapshot = snapshot;
         }
         SnapshotChanged?.Invoke(snapshot);
+        _pushSoon?.Change(TimeSpan.FromSeconds(4), Timeout.InfiniteTimeSpan);
         return snapshot;
     }
 
@@ -187,6 +207,44 @@ public sealed class CompanionService : IDisposable
             _snapshot = s;
         }
         SnapshotChanged?.Invoke(s);
+    }
+
+    // ------------------------------------------------------------------ sayaç düzeltme
+
+    /// <summary>
+    /// Toplamı oyundaki sandık görevinde yazan sayıya eşitler (ör. oyun çöktüğü için eksik kalan sandıklar).
+    /// Farkı geçmişten eklenen değere ekler; maç sayısı, başlangıç tarihi ve replay maçları değişmez.
+    /// Başarılıysa null, değilse kullanıcıya gösterilecek hata metni döner.
+    /// </summary>
+    public string? SetTotalChestsFromGame(int targetChests, string? reason)
+    {
+        var self = Snapshot.Self;
+        if (self == null)
+        {
+            return "Önce Ayarlar → \"Sen kimsin?\" ile kendini seç.";
+        }
+        if (targetChests < 0)
+        {
+            return "Sandık sayısı 0 veya daha büyük olmalı.";
+        }
+        var delta = targetChests - self.TotalChests;
+        if (delta == 0)
+        {
+            return null;
+        }
+        var b = self.Baseline;
+        var newBaseline = (b?.Chests ?? 0) + delta;
+        if (newBaseline < 0)
+        {
+            return $"Bu sayı, replay'lerden sayılan sandıklardan ({self.TrackedChests + self.AdminChests}) az olamaz. " +
+                   "Fazla sayılan bir maç varsa Maç Geçmişi'nden hariç tut.";
+        }
+        var why = string.IsNullOrWhiteSpace(reason) ? "Oyundaki sayaca eşitlendi" : reason.Trim();
+        Db.UpdateBaseline(self.Player.Id, b?.Matches ?? 0, newBaseline, b?.Kills ?? 0,
+            b?.CutoffUtc ?? new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            b?.Note, $"{why} ({(delta > 0 ? "+" : "")}{delta} sandık → {targetChests})");
+        Refresh();
+        return null;
     }
 
     // ------------------------------------------------------------------ ilk açılış
@@ -408,6 +466,7 @@ public sealed class CompanionService : IDisposable
     public void Dispose()
     {
         _syncTimer?.Dispose();
+        _pushSoon?.Dispose();
         Watcher.Dispose();
     }
 }

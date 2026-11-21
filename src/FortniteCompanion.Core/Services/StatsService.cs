@@ -60,7 +60,10 @@ public sealed class PlayerStats
     public int TrackedMatchesWithKills { get; set; }
 
     public int TotalMatches => BaselineMatches + TrackedMatches;
-    public int TotalChests => BaselineChests + TrackedChests;
+    /// <summary>Yönetici panelinden eklenen/çıkarılan sandıklar (yalnızca kendi oyuncumda; ekip sunucusundan gelir).</summary>
+    public int AdminChests { get; set; }
+
+    public int TotalChests => BaselineChests + TrackedChests + AdminChests;
     public int TotalKills => BaselineKills + TrackedKills;
 
     public double ChestsPerMatch => TotalMatches == 0 ? 0 : (double)TotalChests / TotalMatches;

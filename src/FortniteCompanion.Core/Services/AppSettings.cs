@@ -105,6 +105,9 @@ public sealed class AppSettings
     /// <summary>Bu kurulumun gizli anahtarı: satırını yalnızca bu cihaz güncelleyebilir.</summary>
     public string? DeviceSecret { get; set; }
 
+    /// <summary>Yöneticinin bu oyuncuya eklediği/çıkardığı toplam sandık (ekip sunucusundan alınır).</summary>
+    public int AdminChestAdjust { get; set; }
+
     /// <summary>Deneysel ekran analizi: bu sürümde uygulanmadı, her zaman kapalı.</summary>
     [JsonIgnore]
     public bool ExperimentalScreenAnalysis => false;

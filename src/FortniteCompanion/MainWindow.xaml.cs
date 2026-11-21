@@ -18,13 +18,12 @@ public partial class MainWindow : Window
     private void OnNav(object sender, RoutedEventArgs e)
     {
         // InitializeComponent sırasında ilk Checked olayı sayfalar oluşmadan gelebilir.
-        if (OverviewPage == null || MatchesPage == null || FriendsPage == null || ChartsPage == null || SettingsPage == null)
+        if (OverviewPage == null || MatchesPage == null || ChartsPage == null || SettingsPage == null)
         {
             return;
         }
         OverviewPage.Visibility = NavOverview.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         MatchesPage.Visibility = NavMatches.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        FriendsPage.Visibility = NavFriends.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         ChartsPage.Visibility = NavCharts.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = NavSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         if (SettingsPage.Visibility == Visibility.Visible)
