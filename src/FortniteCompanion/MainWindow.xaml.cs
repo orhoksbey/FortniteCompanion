@@ -38,6 +38,10 @@ public partial class MainWindow : Window
         NavMatches.IsChecked = true;
     }
 
+    private void OnUpdateClick(object sender, RoutedEventArgs e) => App.Current.InstallUpdateNow();
+
+    private void OnDismissUpdate(object sender, RoutedEventArgs e) => (DataContext as MainViewModel)?.DismissUpdateBanner();
+
     // ------------------------------------------------------------------ koyu başlık çubuğu
 
     [DllImport("dwmapi.dll")]

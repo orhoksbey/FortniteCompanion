@@ -33,19 +33,19 @@
         </Border>
         <Border Style="{StaticResource Card}">
           <StackPanel>
-            <TextBlock Text="DÖRT OYUNCU: TOPLAM SANDIK" Style="{StaticResource SectionText}" />
+            <TextBlock Text="EKİP: TOPLAM SANDIK" Style="{StaticResource SectionText}" />
             <c:BarChart Height="190" Items="{Binding ComparePoints}" BarBrush="{DynamicResource AccentBrush}" TextBrush="{DynamicResource TextSecondary}" ValueFormat="N0" />
           </StackPanel>
         </Border>
         <Border Style="{StaticResource Card}">
           <StackPanel>
-            <TextBlock Text="DÖRT OYUNCU: SANDIK / MAÇ" Style="{StaticResource SectionText}" />
+            <TextBlock Text="EKİP: SANDIK / MAÇ" Style="{StaticResource SectionText}" />
             <c:BarChart Height="190" Items="{Binding CompareAvgPoints}" BarBrush="{DynamicResource GreenBrush}" TextBrush="{DynamicResource TextSecondary}" ValueFormat="0.0" />
           </StackPanel>
         </Border>
         <Border Style="{StaticResource Card}">
           <StackPanel>
-            <TextBlock Text="DÖRT OYUNCU: TOPLAM KILL" Style="{StaticResource SectionText}" />
+            <TextBlock Text="EKİP: TOPLAM KILL" Style="{StaticResource SectionText}" />
             <c:BarChart Height="190" Items="{Binding CompareKillPoints}" BarBrush="{DynamicResource PurpleBrush}" TextBrush="{DynamicResource TextSecondary}" ValueFormat="N0" />
           </StackPanel>
         </Border>

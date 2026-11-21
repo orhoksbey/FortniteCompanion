@@ -8,6 +8,15 @@ using FortniteCompanion.Core.Services;
 
 namespace FortniteCompanion.ViewModels;
 
+public enum UpdateUiState
+{
+    None,
+    Downloading,
+    Ready,
+    Installing,
+    ManualOnly,
+}
+
 /// <summary>Kontrol panelinin tüm sekmeleri için görünüm modeli. Anlık durumdan (snapshot) yeniden doldurulur.</summary>
 public sealed class MainViewModel : ObservableObject
 {
@@ -24,6 +33,61 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public CompanionService Service => _service;
+
+    // ------------------------------------------------------------------ Güncelleme rozeti (Discord tarzı)
+
+    private UpdateUiState _updateState;
+    public UpdateUiState UpdateState { get => _updateState; private set => Set(ref _updateState, value); }
+
+    private string _updateTag = "";
+    public string UpdateTag { get => _updateTag; private set => Set(ref _updateTag, value); }
+
+    private string _updateButtonText = "";
+    public string UpdateButtonText { get => _updateButtonText; private set => Set(ref _updateButtonText, value); }
+
+    private string _updateBannerText = "";
+    public string UpdateBannerText { get => _updateBannerText; private set => Set(ref _updateBannerText, value); }
+
+    private bool _updateVisible;
+    public bool UpdateVisible { get => _updateVisible; private set => Set(ref _updateVisible, value); }
+
+    private bool _bannerDismissed;
+    private bool _updateBannerVisible;
+    public bool UpdateBannerVisible { get => _updateBannerVisible; private set => Set(ref _updateBannerVisible, value); }
+
+    public string CurrentVersionText => "v" + AutoUpdater.CurrentVersion.ToString(3);
+
+    public void SetUpdateState(string? tag, UpdateUiState state)
+    {
+        if (tag != null && tag != UpdateTag)
+        {
+            _bannerDismissed = false; // yeni sürüm: şeridi yeniden göster
+        }
+        UpdateTag = tag ?? "";
+        UpdateState = state;
+        UpdateVisible = state != UpdateUiState.None;
+        UpdateButtonText = state switch
+        {
+            UpdateUiState.Downloading => "İNDİRİLİYOR…",
+            UpdateUiState.Installing => "KURULUYOR…",
+            UpdateUiState.ManualOnly => "İNDİR",
+            _ => "GÜNCELLE",
+        };
+        UpdateBannerText = state switch
+        {
+            UpdateUiState.Downloading => $"Yeni sürüm {tag} indiriliyor…",
+            UpdateUiState.Installing => $"{tag} kuruluyor, uygulama birkaç saniye içinde yeniden açılacak…",
+            UpdateUiState.ManualOnly => $"Yeni sürüm {tag} yayımlandı. Bu klasöre yazılamadığı için elle indirmeniz gerekiyor.",
+            _ => $"{tag} hazır! Yeni özellikler ve düzeltmeler için şimdi güncelleyin (uygulama birkaç saniyede yeniden açılır).",
+        };
+        UpdateBannerVisible = UpdateVisible && !_bannerDismissed;
+    }
+
+    public void DismissUpdateBanner()
+    {
+        _bannerDismissed = true;
+        UpdateBannerVisible = false;
+    }
 
     // ------------------------------------------------------------------ Genel Bakış
 
@@ -111,7 +175,99 @@ public sealed class MainViewModel : ObservableObject
 
     // ------------------------------------------------------------------ Arkadaşlar
 
+    /// <summary>Tüm görünür oyuncular (sıralı).</summary>
     public ObservableCollection<PlayerCardItem> PlayerCards { get; } = new();
+
+    /// <summary>İlk üç (kürsü).</summary>
+    public ObservableCollection<PlayerCardItem> Podium { get; } = new();
+
+    /// <summary>4. ve sonrası (sıralama listesi).</summary>
+    public ObservableCollection<PlayerCardItem> Others { get; } = new();
+
+    private bool _showHidden;
+    public bool ShowHidden { get => _showHidden; set { if (Set(ref _showHidden, value)) BuildTeam(); } }
+
+    private string _teamSummary = "";
+    public string TeamSummary { get => _teamSummary; private set => Set(ref _teamSummary, value); }
+
+    private string _hiddenInfo = "";
+    public string HiddenInfo { get => _hiddenInfo; private set => Set(ref _hiddenInfo, value); }
+
+    private bool _hasOthers;
+    public bool HasOthers { get => _hasOthers; private set => Set(ref _hasOthers, value); }
+
+    private bool _teamEmpty = true;
+    public bool TeamEmpty { get => _teamEmpty; private set => Set(ref _teamEmpty, value); }
+
+    /// <summary>Grafikler ve sıralama için görünür oyuncular.</summary>
+    private IEnumerable<PlayerStats> VisiblePlayers(CompanionSnapshot s) =>
+        s.Players.Where(p => !p.Player.Hidden || p.Player.Id == _service.Settings.SelfPlayerId);
+
+    private void BuildTeam()
+    {
+        var s = _snapshot;
+        var visible = s.Players
+            .Where(p => ShowHidden || !p.Player.Hidden || p.Player.Id == _service.Settings.SelfPlayerId)
+            .OrderByDescending(x => x.TotalChests).ThenBy(x => x.Player.SortOrder)
+            .ToList();
+        var maxChests = Math.Max(1, visible.Count == 0 ? 1 : visible.Max(p => p.TotalChests));
+
+        PlayerCards.Clear();
+        Podium.Clear();
+        Others.Clear();
+        var rank = 0;
+        foreach (var p in visible)
+        {
+            rank++;
+            var warn = new List<string>();
+            if (!p.Player.EpicNameList.Any())
+            {
+                warn.Add("Epic adı girilmedi: replay'lerdeki sayılar bu oyuncuya bağlanamaz.");
+            }
+            if (p.OverlapCount > 0)
+            {
+                warn.Add($"{p.OverlapCount} örtüşen maç toplama eklenmedi.");
+            }
+            var item = new PlayerCardItem
+            {
+                PlayerId = p.Player.Id,
+                Name = p.Player.DisplayName,
+                EpicNames = p.Player.EpicNames,
+                IsSelf = p.Player.Id == _service.Settings.SelfPlayerId,
+                Hidden = p.Player.Hidden,
+                TotalChestsValue = p.TotalChests,
+                TotalMatches = Fmt.N(p.TotalMatches),
+                AvgChests = Fmt.D1(p.ChestsPerMatch),
+                TotalKills = Fmt.N(p.TotalKills),
+                AvgKills = Fmt.D1(p.KillsPerMatch),
+                Best = p.BestMatch is { } pb ? Fmt.N(pb.Chests) : "—",
+                Week = Fmt.N(p.ThisWeek),
+                BaselineText = $"Geçmiş: {Fmt.N(p.BaselineMatches)} maç · {Fmt.N(p.BaselineChests)} sandık · {Fmt.N(p.BaselineKills)} kill",
+                TrackedText = $"Yeni: {Fmt.N(p.TrackedMatches)} maç · {Fmt.N(p.TrackedChests)} sandık · {Fmt.N(p.TrackedKills)} kill",
+                SourceText = $"Replay: {Fmt.N(p.ReplayVerifiedChests)} · Tahmini: {Fmt.N(p.PartialChests)} · Manuel: {Fmt.N(p.ManualChests)}",
+                BarRatio = (double)p.TotalChests / maxChests,
+                Warning = string.Join(" ", warn),
+                Rank = rank,
+            };
+            PlayerCards.Add(item);
+            if (rank <= 3)
+            {
+                Podium.Add(item);
+            }
+            else
+            {
+                Others.Add(item);
+            }
+        }
+
+        var hiddenCount = s.Players.Count(p => p.Player.Hidden && p.Player.Id != _service.Settings.SelfPlayerId);
+        HiddenInfo = hiddenCount == 0 ? "" : $"{hiddenCount} gizli oyuncu";
+        HasOthers = Others.Count > 0;
+        TeamEmpty = visible.Count <= 1;
+        var teamChests = visible.Sum(p => p.TotalChests);
+        var teamMatches = visible.Sum(p => p.TotalMatches);
+        TeamSummary = $"{visible.Count} oyuncu · ekip toplamı {Fmt.N(teamChests)} sandık · {Fmt.N(teamMatches)} maç";
+    }
     public ObservableCollection<UnmatchedItem> Unmatched { get; } = new();
 
     private bool _hasUnmatched;
@@ -211,7 +367,11 @@ public sealed class MainViewModel : ObservableObject
         }
         if (s.Unmatched.Any(u => u.SeenAsRecorder))
         {
-            warnings.Add("Replay sahibi olarak görülen ama hiçbir oyuncuya bağlanmamış Epic adı var. Arkadaşlar sekmesinden eşleştirin.");
+            warnings.Add("Replay sahibi olarak görülen ama hiçbir oyuncuya bağlanmamış Epic adı var. EKİP sekmesinden eşleştirin.");
+        }
+        if (self == null)
+        {
+            warnings.Add("Henüz kim olduğunu seçmedin: Ayarlar → \"Sen kimsin?\" kurulumunu aç.");
         }
         WarningText = string.Join(Environment.NewLine, warnings.Select(x => "• " + x));
 
@@ -238,43 +398,8 @@ public sealed class MainViewModel : ObservableObject
         }
         ApplyFilter();
 
-        // Arkadaşlar
-        var maxChests = Math.Max(1, s.Players.Count == 0 ? 1 : s.Players.Max(p => p.TotalChests));
-        PlayerCards.Clear();
-        var rank = 0;
-        foreach (var p in s.Players.OrderByDescending(x => x.TotalChests).ThenBy(x => x.Player.SortOrder))
-        {
-            rank++;
-            var warn = new List<string>();
-            if (!p.Player.EpicNameList.Any())
-            {
-                warn.Add("Epic adı girilmedi: replay'lerdeki sayılar bu oyuncuya bağlanamaz.");
-            }
-            if (p.OverlapCount > 0)
-            {
-                warn.Add($"{p.OverlapCount} örtüşen maç toplama eklenmedi.");
-            }
-            PlayerCards.Add(new PlayerCardItem
-            {
-                PlayerId = p.Player.Id,
-                Name = p.Player.DisplayName,
-                EpicNames = p.Player.EpicNames,
-                IsSelf = p.Player.Id == _service.Settings.SelfPlayerId,
-                TotalChestsValue = p.TotalChests,
-                TotalMatches = Fmt.N(p.TotalMatches),
-                AvgChests = Fmt.D1(p.ChestsPerMatch),
-                TotalKills = Fmt.N(p.TotalKills),
-                AvgKills = Fmt.D1(p.KillsPerMatch),
-                Best = p.BestMatch is { } pb ? Fmt.N(pb.Chests) : "—",
-                Week = Fmt.N(p.ThisWeek),
-                BaselineText = $"Geçmiş: {Fmt.N(p.BaselineMatches)} maç · {Fmt.N(p.BaselineChests)} sandık · {Fmt.N(p.BaselineKills)} kill",
-                TrackedText = $"Yeni: {Fmt.N(p.TrackedMatches)} maç · {Fmt.N(p.TrackedChests)} sandık · {Fmt.N(p.TrackedKills)} kill",
-                SourceText = $"Replay: {Fmt.N(p.ReplayVerifiedChests)} · Tahmini: {Fmt.N(p.PartialChests)} · Manuel: {Fmt.N(p.ManualChests)}",
-                BarRatio = (double)p.TotalChests / maxChests,
-                Warning = string.Join(" ", warn),
-                Rank = rank,
-            });
-        }
+        // Ekip
+        BuildTeam();
 
         Unmatched.Clear();
         foreach (var u in s.Unmatched.Take(30))
@@ -385,16 +510,18 @@ public sealed class MainViewModel : ObservableObject
             .ToList();
 
         // Dört oyuncu karşılaştırması
-        ComparePoints = s.Players.Select(x => new ChartPoint(x.Player.DisplayName, x.TotalChests,
+        var team = VisiblePlayers(s).OrderByDescending(x => x.TotalChests).ToList();
+        ComparePoints = team.Select(x => new ChartPoint(x.Player.DisplayName, x.TotalChests,
             $"{x.Player.DisplayName}: {x.TotalChests} sandık (geçmiş {x.BaselineChests} + yeni {x.TrackedChests})")).ToList();
-        CompareAvgPoints = s.Players.Select(x => new ChartPoint(x.Player.DisplayName, Math.Round(x.ChestsPerMatch, 1))).ToList();
-        CompareKillPoints = s.Players.Select(x => new ChartPoint(x.Player.DisplayName, x.TotalKills)).ToList();
+        CompareAvgPoints = team.Select(x => new ChartPoint(x.Player.DisplayName, Math.Round(x.ChestsPerMatch, 1))).ToList();
+        CompareKillPoints = team.Select(x => new ChartPoint(x.Player.DisplayName, x.TotalKills)).ToList();
 
         // Zaman içindeki gelişim: geçmiş değerden başlayan kümülatif toplam (son 30 gün)
         var colors = new[] { "#FFFFC83D", "#FF3FA9FF", "#FF3DDC84", "#FFB57CFF", "#FFFF7A59", "#FF4DE1D2" };
         var days = Enumerable.Range(0, 30).Select(i => today.AddDays(-29 + i)).ToList();
         ProgressLabels = days.Select(d => d.ToString("dd.MM", Fmt.Tr)).ToList();
-        ProgressSeries = s.Players.Select((x, idx) =>
+        // Okunabilirlik için en çok sandığı olan 6 oyuncu
+        ProgressSeries = team.Take(6).Select((x, idx) =>
         {
             var before = x.DailyChests.Where(kv => kv.Key < days[0]).Sum(kv => kv.Value);
             double running = x.BaselineChests + before;
@@ -409,7 +536,7 @@ public sealed class MainViewModel : ObservableObject
 
         // Kişisel rekorlar
         Records.Clear();
-        foreach (var x in s.Players)
+        foreach (var x in team)
         {
             var bestDay = x.DailyChests.OrderByDescending(kv => kv.Value).FirstOrDefault();
             Records.Add($"{x.Player.DisplayName}: en iyi maç {(x.BestMatch is { } bm ? $"{bm.Chests} sandık ({Fmt.Date(bm.StartedUtc)})" : "—")}" +

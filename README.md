@@ -13,7 +13,7 @@ dört kişilik arkadaş karşılaştırması ve grafikler. Arayüz Türkçedir.
 3. Oluşan `dist\FortniteCompanion.exe` dosyasını çalıştırın. Tek dosyadır, kurulum gerektirmez.
 4. Fortnite'ta **Ayarlar → Oyun → Replays → Record Replays: Açık** ve **Pencere modu: Pencereli Tam Ekran** yapın.
 
-Ayrıntılı kurulum: [docs/KURULUM.md](docs/KURULUM.md) · Arkadaşlara otomatik güncelleme yayınlama: [docs/GUNCELLEME.md](docs/GUNCELLEME.md)
+Ayrıntılı kurulum: [docs/KURULUM.md](docs/KURULUM.md) · Ekibe otomatik güncelleme yayınlama: [docs/GUNCELLEME.md](docs/GUNCELLEME.md)
 
 ## Nasıl sayar?
 
@@ -29,22 +29,17 @@ Ayrıntılı kurulum: [docs/KURULUM.md](docs/KURULUM.md) · Arkadaşlara otomati
   aynı maç iki kez sayılmaz.
 - Mühimmat kutuları ve diğer konteynerler (soğutucu, varil, yemek kutusu) sandık toplamına dahil edilmez, ayrı gösterilir.
 
-## Geçmiş veriler
+## Ekip ve geçmiş veriler
 
-Demos klasörü boş olduğu için eski maçlar geri getirilemez ve uygulama bunları kurtarılmış gibi göstermez.
-Önceden tuttuğunuz toplamlar ilk açılışta **"Geçmişten eklenen kayıtlar"** olarak eklenir:
+Uygulama herkese açıktır; sabit bir oyuncu listesi yoktur. İlk açılışta **"Sen kimsin?"** ekranı çıkar:
+görünen ad, Epic adı ve oyundaki görev sayacından (Görevler → Hazine Avı: hazine + nadir + ruh sandıkları)
+şu anki sandık sayısı girilir. Eski maçlar geri getirilemez ve uygulama bunları kurtarılmış gibi göstermez; girilen
+değer **"Önceki istatistikten aktarıldı"** olarak saklanır.
 
-| Oyuncu | Maç | Sandık | Kill |
-|---|---:|---:|---:|
-| Ryder | 47 | 495 | 222 |
-| Orhan | 46 | 529 | 176 |
-| Ohxo | 68 | 644 | 217 |
-| Doğukan | 68 | 997 | 163 |
+**Toplam = başlangıç değeri + başlangıç tarihinden sonraki yeni ve benzersiz maçlar.**
 
-**Toplam = geçmiş başlangıç değeri + başlangıç tarihinden sonraki yeni ve benzersiz maçlar.**
-Başlangıç tarihi ilk çalıştırma anıdır (Arkadaşlar sekmesinden düzenlenebilir). Bu tarihten önce oynanmış bir
-replay bulunursa "örtüşme" uyarısıyla gösterilir ve toplama eklenmez. Tüm düzenlemeler silinemez bir değişiklik
-geçmişine yazılır.
+Ekip arkadaşları **EKİP → Ekip dosyasını dışa aktar** ile bir JSON dosyası paylaşır, diğerleri içe aktarır. Ekip
+istenen kadar kişi olabilir; ilk üç kürsüde, diğerleri sıralama listesinde gösterilir. Ayrılan biri silinmez, gizlenir.
 
 ## Güvenlik
 

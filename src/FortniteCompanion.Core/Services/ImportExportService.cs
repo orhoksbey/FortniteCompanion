@@ -139,10 +139,14 @@ public static class ImportExportService
 
         foreach (var ep in file.Players)
         {
-            var local = players.FirstOrDefault(p => string.Equals(p.DisplayName, ep.DisplayName, StringComparison.OrdinalIgnoreCase));
+            // Önce görünen ad, sonra ortak Epic adı ile eşleştir (biri "Orhan", diğeri "OrhanTR" yazmış olabilir).
+            var fileEpics = ep.EpicNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var local = players.FirstOrDefault(p => string.Equals(p.DisplayName, ep.DisplayName, StringComparison.OrdinalIgnoreCase))
+                        ?? players.FirstOrDefault(p => fileEpics.Any(e => p.Owns(e)));
             if (local == null)
             {
                 local = db.AddPlayer(ep.DisplayName, ep.EpicNames);
+                players.Add(local);
                 report.NewPlayers++;
                 if (ep.BaselineCutoffUtc is DateTime cut)
                 {
@@ -161,6 +165,14 @@ public static class ImportExportService
             }
 
             var b = baselines.FirstOrDefault(x => x.PlayerId == local.Id);
+            if (b == null && ep.BaselineCutoffUtc is DateTime firstCut)
+            {
+                // Yerelde geçmiş değer yok: dosyadakini al.
+                db.UpdateBaseline(local.Id, ep.BaselineMatches ?? 0, ep.BaselineChests ?? 0, ep.BaselineKills ?? 0, firstCut,
+                    "İçe aktarıldı: " + sourceName, "JSON içe aktarma (yerelde geçmiş değer yoktu)");
+                report.BaselinesUpdated++;
+                continue;
+            }
             if (b != null && ep.BaselineChests != null
                 && (b.Chests != ep.BaselineChests || b.Matches != ep.BaselineMatches || b.Kills != ep.BaselineKills
                     || (ep.BaselineCutoffUtc is DateTime fc && fc != b.CutoffUtc)))

@@ -27,15 +27,42 @@ public partial class FriendsView : UserControl
         {
             return;
         }
-        var dlg = new FormDialog($"{player.DisplayName} — Epic adları",
-                "Oyundaki görünen adı (Epic adı) birebir yazın. Birden fazla hesap varsa virgülle ayırın. Replay'lerdeki sayılar bu adlarla eşleştirilir.")
-            .Text("names", "Epic adları", player.EpicNames);
+        var dlg = new FormDialog($"{player.DisplayName} — düzenle",
+                "Epic adını oyunda göründüğü gibi birebir yazın. Birden fazla hesap varsa virgülle ayırın. Replay'lerdeki sayılar bu adlarla eşleştirilir.")
+            .Text("name", "Görünen ad", player.DisplayName)
+            .Text("names", "Epic adları", player.EpicNames)
+            .Validate(d => d.GetText("name").Length == 0 ? "Görünen ad boş olamaz." : null);
         dlg.Owner = Window.GetWindow(this);
-        if (dlg.ShowDialog() == true)
+        if (dlg.ShowDialog() != true)
         {
-            Service.Db.SetEpicNames(player.Id, dlg.GetText("names"), "Kullanıcı Epic adlarını düzenledi");
-            Service.Refresh();
+            return;
         }
+        try
+        {
+            Service.Db.RenamePlayer(player.Id, dlg.GetText("name"), "Kullanıcı oyuncuyu düzenledi");
+            Service.Db.SetEpicNames(player.Id, dlg.GetText("names"), "Kullanıcı Epic adlarını düzenledi");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Kaydedilemedi (aynı ad başka oyuncuda olabilir): " + ex.Message, "Düzenle");
+        }
+        Service.Refresh();
+    }
+
+    private void OnToggleHidden(object sender, RoutedEventArgs e)
+    {
+        var player = Service.Db.GetPlayers().FirstOrDefault(p => p.Id == IdOf(sender));
+        if (player == null)
+        {
+            return;
+        }
+        if (!player.Hidden && player.Id == Service.Settings.SelfPlayerId)
+        {
+            MessageBox.Show("Kendinizi gizleyemezsiniz.", "Ekip");
+            return;
+        }
+        Service.Db.SetHidden(player.Id, !player.Hidden, player.Hidden ? "Kullanıcı yeniden gösterdi" : "Kullanıcı gizledi (ekipten ayrıldı)");
+        Service.Refresh();
     }
 
     private void OnEditBaseline(object sender, RoutedEventArgs e)
@@ -113,7 +140,7 @@ public partial class FriendsView : UserControl
         var dlg = new SaveFileDialog
         {
             Filter = "Fortnite Companion verisi (*.json)|*.json",
-            FileName = $"fortnite-companion-{self}-{DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}.json",
+            FileName = $"fortnite-companion-ekip-{self}-{DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}.json",
         };
         if (dlg.ShowDialog(Window.GetWindow(this)) != true)
         {

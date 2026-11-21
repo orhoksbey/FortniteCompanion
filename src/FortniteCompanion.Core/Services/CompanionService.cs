@@ -54,16 +54,11 @@ public sealed class CompanionService : IDisposable
         Settings = settings;
         SettingsPath = settingsPath;
 
-        // İlk kurulum: geçmiş istatistikleri ekle. Başlangıç tarihi = ilk çalıştırma anı
-        // (Demos klasörü boş olduğu için bundan önceki hiçbir maç replay'den sayılamaz).
-        if (Db.SeedDefaults(DateTime.UtcNow))
+        // Sabit oyuncu listesi yok: herkes ilk açılışta kendini tanıtır ("Sen kimsin?"), ekip arkadaşları
+        // JSON ekip dosyasıyla gelir. Geçersiz kalmış "ben" seçimi temizlenir.
+        if (Settings.SelfPlayerId != null && Db.GetPlayers().All(p => p.Id != Settings.SelfPlayerId))
         {
-            AppLog.Info("Geçmiş başlangıç verileri eklendi.");
-        }
-
-        if (Settings.SelfPlayerId == null || Db.GetPlayers().All(p => p.Id != Settings.SelfPlayerId))
-        {
-            Settings.SelfPlayerId = Db.GetPlayers().FirstOrDefault()?.Id;
+            Settings.SelfPlayerId = null;
             SaveSettings();
         }
 
@@ -159,6 +154,59 @@ public sealed class CompanionService : IDisposable
             _snapshot = s;
         }
         SnapshotChanged?.Invoke(s);
+    }
+
+    // ------------------------------------------------------------------ ilk açılış
+
+    /// <summary>
+    /// "Sen kimsin?" kurulumunu kaydeder: var olan bir oyuncuyu seçer ya da yenisini oluşturur, Epic adını ve
+    /// (girildiyse) oyundaki sayaçtan alınan başlangıç değerlerini yazar. Başlangıç tarihi şu andır.
+    /// </summary>
+    public Player CompleteOnboarding(long? existingPlayerId, string displayName, string epicNames, int? chests, int? matches, int? kills)
+    {
+        displayName = displayName.Trim();
+        var players = Db.GetPlayers();
+        Player player;
+        if (existingPlayerId is long id && players.FirstOrDefault(p => p.Id == id) is { } existing)
+        {
+            player = existing;
+            if (!string.Equals(existing.DisplayName, displayName, StringComparison.Ordinal) && displayName.Length > 0)
+            {
+                Db.RenamePlayer(existing.Id, displayName, "İlk açılış kurulumu");
+            }
+        }
+        else
+        {
+            player = players.FirstOrDefault(p => string.Equals(p.DisplayName, displayName, StringComparison.OrdinalIgnoreCase))
+                     ?? Db.AddPlayer(displayName, epicNames);
+        }
+
+        if (!string.IsNullOrWhiteSpace(epicNames))
+        {
+            var merged = string.Join(", ", player.EpicNameList.Concat(epicNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+            Db.SetEpicNames(player.Id, merged, "İlk açılış kurulumu");
+        }
+
+        if (chests != null || matches != null || kills != null)
+        {
+            var b = Db.GetBaselines().FirstOrDefault(x => x.PlayerId == player.Id);
+            var newChests = chests ?? b?.Chests ?? 0;
+            var newMatches = matches ?? b?.Matches ?? 0;
+            var newKills = kills ?? b?.Kills ?? 0;
+            if (b == null || b.Chests != newChests || b.Matches != newMatches || b.Kills != newKills)
+            {
+                Db.UpdateBaseline(player.Id, newMatches, newChests, newKills, DateTime.UtcNow,
+                    "Oyundaki sayaçtan (ilk açılış)", "İlk açılış kurulumu");
+            }
+        }
+
+        Db.SetHidden(player.Id, false, "İlk açılış kurulumu");
+        Settings.SelfPlayerId = player.Id;
+        Settings.OnboardingDone = true;
+        SaveSettings();
+        Refresh();
+        return Db.GetPlayers().First(p => p.Id == player.Id);
     }
 
     // ------------------------------------------------------------------ maç sonu

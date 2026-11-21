@@ -206,7 +206,27 @@ public sealed class Database : IDisposable
             using var cmd = Cmd("INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', $v);", null, ("$v", SchemaVersion.ToString(CultureInfo.InvariantCulture)));
             cmd.ExecuteNonQuery();
         }
+        AddColumnIfMissing("players", "hidden", "INTEGER NOT NULL DEFAULT 0");
         RepairLegacyStartTimes();
+    }
+
+    private void AddColumnIfMissing(string table, string column, string definition)
+    {
+        lock (_lock)
+        {
+            using (var info = Cmd($"PRAGMA table_info({table});"))
+            using (var r = info.ExecuteReader())
+            {
+                while (r.Read())
+                {
+                    if (string.Equals(r.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+                }
+            }
+            Exec($"ALTER TABLE {table} ADD COLUMN {column} {definition};");
+        }
     }
 
     /// <summary>
@@ -371,12 +391,19 @@ public sealed class Database : IDisposable
     {
         lock (_lock)
         {
-            using var cmd = Cmd("SELECT id, display_name, epic_names, sort_order FROM players ORDER BY sort_order, id;");
+            using var cmd = Cmd("SELECT id, display_name, epic_names, sort_order, hidden FROM players ORDER BY sort_order, id;");
             using var r = cmd.ExecuteReader();
             var list = new List<Player>();
             while (r.Read())
             {
-                list.Add(new Player { Id = r.GetInt64(0), DisplayName = r.GetString(1), EpicNames = r.GetString(2), SortOrder = r.GetInt32(3) });
+                list.Add(new Player
+                {
+                    Id = r.GetInt64(0),
+                    DisplayName = r.GetString(1),
+                    EpicNames = r.GetString(2),
+                    SortOrder = r.GetInt32(3),
+                    Hidden = r.GetInt32(4) != 0,
+                });
             }
             return list;
         }
@@ -438,6 +465,59 @@ public sealed class Database : IDisposable
                 u.ExecuteNonQuery();
             }
             LogUnlocked(tx, "player", name, "epic_names", old, normalized, reason);
+            tx.Commit();
+        }
+    }
+
+    /// <summary>Oyuncuyu gizler/gösterir (ekipten ayrılan biri). Veriler silinmez.</summary>
+    public void SetHidden(long playerId, bool hidden, string reason)
+    {
+        lock (_lock)
+        {
+            using var tx = _conn.BeginTransaction();
+            string? name;
+            using (var q = Cmd("SELECT display_name FROM players WHERE id = $id;", tx, ("$id", playerId)))
+            {
+                name = q.ExecuteScalar() as string;
+            }
+            if (name == null)
+            {
+                return;
+            }
+            using (var u = Cmd("UPDATE players SET hidden = $h WHERE id = $id;", tx, ("$h", hidden ? 1 : 0), ("$id", playerId)))
+            {
+                u.ExecuteNonQuery();
+            }
+            LogUnlocked(tx, "player", name, "hidden", (!hidden).ToString(), hidden.ToString(), reason);
+            tx.Commit();
+        }
+    }
+
+    /// <summary>Görünen adı değiştirir. Aynı ad başka oyuncuda varsa istisna fırlatır.</summary>
+    public void RenamePlayer(long playerId, string newName, string reason)
+    {
+        newName = newName.Trim();
+        if (newName.Length == 0)
+        {
+            throw new ArgumentException("Ad boş olamaz.", nameof(newName));
+        }
+        lock (_lock)
+        {
+            using var tx = _conn.BeginTransaction();
+            string? old;
+            using (var q = Cmd("SELECT display_name FROM players WHERE id = $id;", tx, ("$id", playerId)))
+            {
+                old = q.ExecuteScalar() as string;
+            }
+            if (old == null || string.Equals(old, newName, StringComparison.Ordinal))
+            {
+                return;
+            }
+            using (var u = Cmd("UPDATE players SET display_name = $n WHERE id = $id;", tx, ("$n", newName), ("$id", playerId)))
+            {
+                u.ExecuteNonQuery();
+            }
+            LogUnlocked(tx, "player", old, "display_name", old, newName, reason);
             tx.Commit();
         }
     }

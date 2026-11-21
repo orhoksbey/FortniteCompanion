@@ -75,6 +75,7 @@ public partial class SettingsView : UserControl
         BackupFolder.Text = s.BackupFolder ?? "";
         HideUnknown.IsChecked = s.ExportHideUnknownNames;
         AutoUpdateBox.IsChecked = s.AutoUpdate;
+        AutoInstallBox.IsChecked = s.AutoInstallUpdates;
         UpdateRepoBox.Text = s.UpdateRepo ?? "";
         var repo = AutoUpdater.EffectiveRepo(s);
         UpdateInfo.Text = $"Kurulu sürüm: {AutoUpdater.CurrentVersion.ToString(3)} · Güncelleme kaynağı: " +
@@ -158,6 +159,7 @@ public partial class SettingsView : UserControl
         s.BackupFolder = string.IsNullOrWhiteSpace(BackupFolder.Text) ? null : BackupFolder.Text.Trim();
         s.ExportHideUnknownNames = HideUnknown.IsChecked == true;
         s.AutoUpdate = AutoUpdateBox.IsChecked == true;
+        s.AutoInstallUpdates = AutoInstallBox.IsChecked == true;
         s.UpdateRepo = string.IsNullOrWhiteSpace(UpdateRepoBox.Text) ? null : UpdateRepoBox.Text.Trim().Trim('/');
 
         var newHotkeys = string.Join("|", s.HotkeyToggleOverlay, s.HotkeyToggleLock, s.HotkeyManualIncrement, s.HotkeyManualDecrement);
@@ -174,6 +176,12 @@ public partial class SettingsView : UserControl
         s.OverlayScreen = null;
         Corner.SelectedIndex = 0;
         App.Current.ApplySettings(hotkeysChanged: false, folderChanged: false);
+    }
+
+    private void OnOnboarding(object sender, RoutedEventArgs e)
+    {
+        App.Current.ShowOnboarding();
+        LoadFromSettings();
     }
 
     private void OnBrowseReplay(object sender, RoutedEventArgs e)

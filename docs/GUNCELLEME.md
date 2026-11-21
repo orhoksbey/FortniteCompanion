@@ -1,8 +1,12 @@
-# Otomatik güncelleme: arkadaşlarına güncelleme yayınlama
+# Güncelleme yayınlama
 
-Arkadaşların bir kez kurar, sonra hiçbir şey yapmaz. Sen GitHub'da yeni sürüm yayınlarsın; onların uygulaması
-açılışta ve 6 saatte bir kontrol eder, yeni sürümü indirir, doğrular ve **Fortnite kapalıyken** kurup kendini
-yeniden başlatır. Maç sırasında asla güncellenmez.
+Ekip bir kez kurar, sonra uygulama güncellemeleri kendisi bulur. Siz GitHub'da yeni sürüm yayınlarsınız; herkesin
+uygulaması **açılışta ve 30 dakikada bir** kontrol eder, yeni sürümü arka planda indirip doğrular ve üst menüde
+Discord'daki gibi yeşil **⬇ GÜNCELLE** düğmesini, altında da **"GÜNCELLEME VAR!"** şeridini gösterir. Tıklayınca birkaç
+saniyede kurulur ve uygulama yeniden açılır. Fortnite açıkken tıklanırsa önce onay sorulur.
+
+İsteyen Ayarlar → **"Sormadan kur"** seçeneğini açabilir: o zaman güncelleme Fortnite kapandıktan birkaç dakika sonra
+kendiliğinden kurulur. Maç sırasında asla otomatik kurulmaz.
 
 ## Bir kerelik kurulum (yaklaşık 10 dakika)
 

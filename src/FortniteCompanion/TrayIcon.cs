@@ -25,7 +25,7 @@ public sealed class TrayIcon : IDisposable
 
     public TrayIcon()
     {
-        _image = CreateChestIcon();
+        _image = LoadAppIcon() ?? CreateChestIcon();
         var menu = new WinForms.ContextMenuStrip();
 
         _headerItem = new WinForms.ToolStripMenuItem("Fortnite Companion") { Enabled = false };
@@ -73,6 +73,19 @@ public sealed class TrayIcon : IDisposable
     public void ShowNotification(string title, string text, bool warning = false)
     {
         _icon.ShowBalloonTip(6000, title, text, warning ? WinForms.ToolTipIcon.Warning : WinForms.ToolTipIcon.Info);
+    }
+
+    /// <summary>EXE'ye gömülü uygulama simgesi (app.ico).</summary>
+    private static Drawing.Icon? LoadAppIcon()
+    {
+        try
+        {
+            return Environment.ProcessPath is { } exe ? Drawing.Icon.ExtractAssociatedIcon(exe) : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>Sandık simgesini çalışma anında çizer (harici .ico dosyası gerekmez).</summary>

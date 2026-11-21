@@ -67,7 +67,10 @@
             <StackPanel>
               <TextBlock Text="SAYIM VE REPLAY KLASÖRÜ" Style="{StaticResource SectionText}" />
               <TextBlock Text="Bu bilgisayarın oyuncusu (overlay'de gösterilir)" Style="{StaticResource LabelText}" Margin="0,0,0,3" />
-              <ComboBox x:Name="SelfPlayer" HorizontalAlignment="Left" />
+              <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="SelfPlayer" HorizontalAlignment="Left" />
+                <Button Content="&quot;Sen kimsin?&quot; kurulumunu aç" Click="OnOnboarding" />
+              </StackPanel>
               <TextBlock Text="Replay klasörü" Style="{StaticResource LabelText}" Margin="0,0,0,3" />
               <TextBox x:Name="ReplayFolder" />
               <WrapPanel>
@@ -124,7 +127,8 @@
               <StackPanel>
                 <TextBlock Text="GİZLİLİK VE GÜNCELLEME" Style="{StaticResource SectionText}" />
                 <CheckBox x:Name="HideUnknown" Content="Dışa aktarmada takipte olmayan oyuncu adlarını gizle" />
-                <CheckBox x:Name="AutoUpdateBox" Content="Otomatik güncelle (GitHub sürümlerinden, oyun kapalıyken kurulur)" />
+                <CheckBox x:Name="AutoUpdateBox" Content="Güncellemeleri denetle (açılışta ve 30 dakikada bir)" />
+                <CheckBox x:Name="AutoInstallBox" Content="Sormadan kur (Fortnite kapalıyken); kapalıysa üstteki yeşil düğmeyle kurulur" />
                 <TextBlock Text="GitHub deposu (kullanıcı/depo — boşsa EXE'ye gömülü depo)" Style="{StaticResource LabelText}" />
                 <TextBox x:Name="UpdateRepoBox" />
                 <TextBlock x:Name="UpdateInfo" Text="" Style="{StaticResource HintText}" Margin="0,0,0,6" />

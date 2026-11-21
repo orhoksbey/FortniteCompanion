@@ -175,6 +175,9 @@ public sealed class PlayerCardItem
     public string Name { get; init; } = "";
     public string EpicNames { get; init; } = "";
     public bool IsSelf { get; init; }
+    public bool Hidden { get; init; }
+    public string HideButtonText => Hidden ? "Göster" : "Gizle";
+    public double RowOpacity => Hidden ? 0.55 : 1.0;
     public string SelfBadge => IsSelf ? "BU BİLGİSAYAR" : "";
     public int TotalChestsValue { get; init; }
     public string TotalChests => Fmt.N(TotalChestsValue);
@@ -189,6 +192,7 @@ public sealed class PlayerCardItem
     public string SourceText { get; init; } = "";
     public double BarRatio { get; init; }
     public double BarWidth => Math.Max(4, BarRatio * 260);
+    public double BarWidthSmall => Math.Max(3, BarRatio * 120);
     public string Warning { get; init; } = "";
     public bool HasWarning => Warning.Length > 0;
 

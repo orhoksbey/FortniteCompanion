@@ -144,10 +144,11 @@ public partial class App : Application
         }
 
         // Otomatik güncelleme: açılıştan 30 sn sonra, sonra 6 saatte bir.
-        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        // Güncelleme denetimi: açılıştan 8 sn sonra, sonra 30 dakikada bir.
+        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
         _updateTimer.Tick += (_, _) =>
         {
-            _updateTimer!.Interval = TimeSpan.FromHours(6);
+            _updateTimer!.Interval = TimeSpan.FromMinutes(30);
             if (_service.Settings.AutoUpdate)
             {
                 _ = CheckForUpdateAsync(manual: false);
@@ -161,10 +162,29 @@ public partial class App : Application
 
         var minimized = e.Args.Any(a => string.Equals(a, "--minimized", StringComparison.OrdinalIgnoreCase))
                         || (settings.StartMinimized && !firstRun);
-        if (!minimized)
+        if (!settings.OnboardingDone)
+        {
+            // İlk açılış (veya bu özellikten önceki sürümden güncelleme): "Sen kimsin?"
+            ShowMain();
+            Dispatcher.BeginInvoke(new Action(ShowOnboarding), DispatcherPriority.Loaded);
+        }
+        else if (!minimized)
         {
             ShowMain();
         }
+    }
+
+    /// <summary>"Sen kimsin?" kurulum penceresi.</summary>
+    public void ShowOnboarding()
+    {
+        if (_service == null || _exiting)
+        {
+            return;
+        }
+        ShowMain();
+        var w = new Views.OnboardingWindow(_service) { Owner = _main };
+        w.ShowDialog();
+        _service.Refresh();
     }
 
     // ------------------------------------------------------------------ pencereler
@@ -483,7 +503,12 @@ public partial class App : Application
 
     // ------------------------------------------------------------------ otomatik güncelleme
 
-    /// <summary>GitHub'daki son sürümü denetler; daha yeniyse indirir ve uygun anda kurar.</summary>
+    private string? _notifiedTag;
+
+    /// <summary>
+    /// GitHub'daki son sürümü denetler. Daha yeniyse arka planda indirir ve üst menüde yeşil "GÜNCELLEME VAR"
+    /// düğmesini gösterir. Kurulum kullanıcı tıklayınca (veya ayar açıksa oyun kapalıyken otomatik) yapılır.
+    /// </summary>
     public async Task CheckForUpdateAsync(bool manual)
     {
         if (_service == null || _updating || _exiting)
@@ -512,6 +537,7 @@ public partial class App : Application
             }
             if (!AutoUpdater.IsNewer(release))
             {
+                _vm?.SetUpdateState(null, UpdateUiState.None);
                 if (manual) MessageBox.Show($"Güncelsiniz. Kurulu: {AutoUpdater.CurrentVersion.ToString(3)} · GitHub'daki son sürüm: {release.Tag}", "Güncelleme");
                 return;
             }
@@ -519,22 +545,49 @@ public partial class App : Application
             var exe = Environment.ProcessPath;
             if (exe == null || !AutoUpdater.CanWriteNextTo(exe))
             {
-                _tray?.ShowNotification("Yeni sürüm var: " + release.Tag,
-                    "Uygulamanın bulunduğu klasöre yazılamıyor; yeni sürümü elle indirin: " + (release.HtmlUrl ?? repo));
+                _pendingRelease = release; // düğme tıklanınca indirme sayfası açılır
+                _vm?.SetUpdateState(release.Tag, UpdateUiState.ManualOnly);
+                if (_notifiedTag != release.Tag)
+                {
+                    _notifiedTag = release.Tag;
+                    _tray?.ShowNotification("Yeni sürüm var: " + release.Tag,
+                        "Uygulamanın bulunduğu klasöre yazılamıyor; yeni sürümü elle indirin: " + (release.HtmlUrl ?? repo));
+                }
                 return;
             }
 
             if (_pendingRelease?.Version != release.Version || _pendingUpdateFile == null || !File.Exists(_pendingUpdateFile))
             {
+                _vm?.SetUpdateState(release.Tag, UpdateUiState.Downloading);
                 _pendingUpdateFile = await Task.Run(() => AutoUpdater.DownloadAsync(release, exe));
                 _pendingRelease = release;
                 AppLog.Info($"Güncelleme indirildi: {release.Tag}");
             }
-            TryInstallPendingUpdate(userInitiated: manual);
+            _vm?.SetUpdateState(release.Tag, UpdateUiState.Ready);
+
+            if (_notifiedTag != release.Tag)
+            {
+                _notifiedTag = release.Tag;
+                _tray?.ShowNotification("GÜNCELLEME VAR! " + release.Tag,
+                    "Kurmak için uygulamanın üst menüsündeki yeşil GÜNCELLE düğmesine basın.");
+            }
+
+            if (manual)
+            {
+                InstallUpdateNow();
+            }
+            else if (_service.Settings.AutoInstallUpdates)
+            {
+                TryInstallPendingUpdate(userInitiated: false);
+            }
         }
         catch (Exception ex)
         {
             AppLog.Error("Güncelleme başarısız", ex);
+            if (_pendingUpdateFile == null)
+            {
+                _vm?.SetUpdateState(null, UpdateUiState.None);
+            }
             if (manual) MessageBox.Show("Güncelleme başarısız: " + ex.Message, "Güncelleme", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
@@ -543,9 +596,30 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Üst menüdeki yeşil "GÜNCELLE" düğmesi.</summary>
+    public async void InstallUpdateNow()
+    {
+        if (_pendingUpdateFile == null || !File.Exists(_pendingUpdateFile))
+        {
+            if (!_updating)
+            {
+                await CheckForUpdateAsync(manual: false);
+            }
+            if (_pendingUpdateFile == null)
+            {
+                if (_pendingRelease?.HtmlUrl is { } url && _vm?.UpdateState == UpdateUiState.ManualOnly)
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                return;
+            }
+        }
+        TryInstallPendingUpdate(userInitiated: true);
+    }
+
     /// <summary>
-    /// İndirilmiş güncellemeyi kurar. Oyun sırasında asla otomatik kurulmaz: Fortnite açıksa oyun kapanıp
-    /// maç sonu işleri bitince kurulur.
+    /// İndirilmiş güncellemeyi kurar. Otomatik kurulum oyun sırasında asla yapılmaz; kullanıcı tıkladıysa ve
+    /// Fortnite açıksa önce onay istenir.
     /// </summary>
     private void TryInstallPendingUpdate(bool userInitiated)
     {
@@ -553,17 +627,19 @@ public partial class App : Application
         {
             return;
         }
-        if (!userInitiated && (_fortniteRunning || _replaysAtGameStart >= 0))
+        if (!userInitiated && (!_service.Settings.AutoInstallUpdates || _fortniteRunning || _replaysAtGameStart >= 0))
         {
-            _tray?.ShowNotification("Güncelleme hazır: " + _pendingRelease.Tag, "Fortnite kapandıktan birkaç dakika sonra otomatik kurulacak.");
             return;
         }
-        if (userInitiated && MessageBox.Show($"{_pendingRelease.Tag} indirildi. Şimdi kurulsun ve uygulama yeniden başlatılsın mı?",
-                "Güncelleme", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+        if (userInitiated && _fortniteRunning
+            && MessageBox.Show($"{_pendingRelease.Tag} kurulacak. Fortnite açık: overlay birkaç saniyeliğine kapanıp yeniden açılacak. " +
+                               "Maçın ortasındaysanız maç bitince güncellemeniz önerilir.\n\nŞimdi güncellensin mi?",
+                    "Güncelleme", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
         {
             return;
         }
 
+        _vm?.SetUpdateState(_pendingRelease.Tag, UpdateUiState.Installing);
         var minimized = _main == null || !_main.IsVisible;
         _service.SaveSettings();
         if (AutoUpdater.InstallAndRestart(exe, _pendingUpdateFile, minimized))
@@ -573,6 +649,7 @@ public partial class App : Application
         }
         else
         {
+            _vm?.SetUpdateState(_pendingRelease.Tag, UpdateUiState.Ready);
             _tray?.ShowNotification("Güncelleme kurulamadı", "Ayrıntılar hata günlüğünde. Mevcut sürüm çalışmaya devam ediyor.", warning: true);
         }
     }

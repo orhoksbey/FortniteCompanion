@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:FortniteCompanion.Views"
         Title="Fortnite Companion"
+        Icon="app.ico"
         Width="1320" Height="840" MinWidth="1040" MinHeight="660"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBackground}"
@@ -11,6 +12,7 @@
         UseLayoutRounding="True">
   <Grid>
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
@@ -21,6 +23,7 @@
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
@@ -34,6 +37,8 @@
             <TextBlock Text="FORTNITE" FontFamily="{StaticResource DisplayFont}" FontSize="13" Foreground="{DynamicResource YellowBrush}" />
             <TextBlock Text="COMPANION" FontFamily="{StaticResource DisplayFont}" FontSize="24" Foreground="White"
                        Margin="0,-4,0,0" Effect="{StaticResource HardShadow}" />
+            <TextBlock Text="{Binding CurrentVersionText}" FontFamily="{StaticResource CondensedFont}" FontSize="10.5"
+                       FontWeight="Bold" Foreground="#99FFFFFF" Margin="0,-2,0,0" />
           </StackPanel>
         </StackPanel>
 
@@ -41,13 +46,18 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
           <RadioButton x:Name="NavOverview" Content="GENEL BAKIŞ" Style="{StaticResource NavButton}" GroupName="nav" IsChecked="True" Checked="OnNav" />
           <RadioButton x:Name="NavMatches" Content="MAÇ GEÇMİŞİ" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
-          <RadioButton x:Name="NavFriends" Content="ARKADAŞLAR" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
+          <RadioButton x:Name="NavFriends" Content="EKİP" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
           <RadioButton x:Name="NavCharts" Content="GRAFİKLER" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
           <RadioButton x:Name="NavSettings" Content="AYARLAR" Style="{StaticResource NavButton}" GroupName="nav" Checked="OnNav" />
         </StackPanel>
 
+        <!-- Güncelleme rozeti (Discord'daki yeşil indirme simgesi gibi) -->
+        <Button Grid.Column="2" Style="{StaticResource UpdateButton}" Content="{Binding UpdateButtonText}" Click="OnUpdateClick"
+                Margin="0,0,12,0" VerticalAlignment="Center" Visibility="{Binding UpdateVisible, Converter={StaticResource BoolToVis}}"
+                ToolTip="{Binding UpdateBannerText}" />
+
         <!-- Oyuncu + toplam sandık "cüzdanı" (V-Papel göstergesi gibi) -->
-        <Border Grid.Column="2" CornerRadius="20" Padding="6,4,16,4" VerticalAlignment="Center"
+        <Border Grid.Column="3" CornerRadius="20" Padding="6,4,16,4" VerticalAlignment="Center"
                 Background="#66000000" BorderBrush="#40FFFFFF" BorderThickness="1"
                 ToolTip="{Binding TotalChestsSource}">
           <StackPanel Orientation="Horizontal">
@@ -67,8 +77,31 @@
       </Grid>
     </Border>
 
+    <!-- Güncelleme şeridi -->
+    <Border Grid.Row="1" Visibility="{Binding UpdateBannerVisible, Converter={StaticResource BoolToVis}}" Padding="22,9">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+          <GradientStop Color="#F023A55A" Offset="0" />
+          <GradientStop Color="#F01B8F7A" Offset="1" />
+        </LinearGradientBrush>
+      </Border.Background>
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Content="Sonra" Click="OnDismissUpdate" Margin="8,0,0,0" Padding="12,5"
+                Background="#33000000" BorderBrush="#80FFFFFF" Foreground="White" VerticalAlignment="Center" />
+        <Button DockPanel.Dock="Right" Content="{Binding UpdateButtonText}" Click="OnUpdateClick" Style="{StaticResource AccentButton}"
+                Margin="8,0,0,0" Padding="18,5" VerticalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Style="{StaticResource Ribbon}" Background="White" Margin="0,0,14,0" VerticalAlignment="Center">
+            <TextBlock Text="GÜNCELLEME VAR!" Style="{StaticResource RibbonText}" Foreground="#FF1B7A45" />
+          </Border>
+          <TextBlock Text="{Binding UpdateBannerText}" FontFamily="{StaticResource CondensedFont}" FontWeight="Bold" FontSize="14"
+                     Foreground="White" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
     <!-- İçerik -->
-    <Grid Grid.Row="1" Margin="22,16,22,12">
+    <Grid Grid.Row="2" Margin="22,16,22,12">
       <views:OverviewView x:Name="OverviewPage" />
       <views:MatchesView x:Name="MatchesPage" Visibility="Collapsed" />
       <views:FriendsView x:Name="FriendsPage" Visibility="Collapsed" />

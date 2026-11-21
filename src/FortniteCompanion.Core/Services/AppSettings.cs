@@ -72,11 +72,17 @@ public sealed class AppSettings
     public bool ExportHideUnknownNames { get; set; } = true;
 
     /// <summary>
-    /// Otomatik güncelleme: açılışta ve 6 saatte bir GitHub'daki son sürüme bakılır; daha yenisi varsa indirilir,
-    /// doğrulanır ve Fortnite kapalıyken kurulup uygulama yeniden başlatılır. Yalnızca api.github.com ve
-    /// github.com'a bağlanılır; hiçbir kullanıcı verisi gönderilmez.
+    /// Güncelleme denetimi: açılışta ve 30 dakikada bir GitHub'daki son sürüme bakılır. Yeni sürüm arka planda
+    /// indirilir ve üst menüde yeşil "GÜNCELLEME VAR" simgesi gösterilir. Yalnızca api.github.com ve github.com'a
+    /// bağlanılır; hiçbir kullanıcı verisi gönderilmez.
     /// </summary>
     public bool AutoUpdate { get; set; } = true;
+
+    /// <summary>İndirilen güncellemeyi sormadan kur (Fortnite kapalıyken). Kapalıysa kullanıcı "Güncelle"ye basar.</summary>
+    public bool AutoInstallUpdates { get; set; }
+
+    /// <summary>İlk açılış kurulumu ("Sen kimsin?") tamamlandı mı?</summary>
+    public bool OnboardingDone { get; set; }
 
     /// <summary>GitHub deposu ("kullanıcı/depo"). Boşsa EXE'nin içine derlemede gömülen depo kullanılır.</summary>
     public string? UpdateRepo { get; set; }

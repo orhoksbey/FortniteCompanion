@@ -66,6 +66,9 @@ public sealed class Player
 
     public int SortOrder { get; set; }
 
+    /// <summary>Ekipten ayrılan oyuncu: silinmez (kalıcı geçmiş), listelerde gizlenir.</summary>
+    public bool Hidden { get; set; }
+
     public IEnumerable<string> EpicNameList =>
         EpicNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 

@@ -11,6 +11,7 @@
     <AssemblyName>FortniteCompanion</AssemblyName>
     <RootNamespace>FortniteCompanion</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <Product>Fortnite Companion</Product>
     <Description>Fortnite için replay tabanlı sandık sayacı ve istatistik paneli</Description>
     <!-- Parser tipleri yansıma ile bulur: kırpma (trimming) kapalı. -->
@@ -23,6 +24,10 @@
     <!-- Linux/macOS üzerinde de derlenebilsin (yalnızca derleme; çalıştırma Windows gerektirir). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FortniteCompanion.Core\FortniteCompanion.Core.csproj" />
